@@ -76,8 +76,9 @@ const CategoryPage = () => {
               </div>
               <div className="mt-4 text-center">
                 <h3 
-                  className="text-lg font-medium text-gray-900 cursor-pointer"
+                  className="text-lg font-medium text-gray-900 cursor-pointer truncate overflow-hidden text-ellipsis"
                   onClick={() => navigate(`/product/${product.id}`)}
+                  title={product.name} // Show full name on hover
                 >
                   {product.name}
                 </h3>

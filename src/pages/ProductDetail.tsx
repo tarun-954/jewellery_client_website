@@ -81,6 +81,7 @@ const ProductDetail = () => {
               >
                 Add to Cart
               </button>
+         
               <button className="w-full border border-amber-800 text-amber-800 px-6 py-3 rounded-md hover:bg-amber-50 transition">
                 Book Store Visit
               </button>

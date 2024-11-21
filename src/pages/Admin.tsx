@@ -143,11 +143,16 @@ const Admin = () => {
                     alt={product.name}
                     className="w-16 h-16 object-cover rounded"
                   />
-                  <div className="flex-1">
+                  <div className="flex-1 overflow-hidden">
                     <h3 className="font-medium">{product.name}</h3>
                     <p className="text-sm text-gray-500">{product.price}</p>
                     <p className="text-sm text-gray-500 capitalize">{product.category}</p>
-                    <p className="text-sm text-gray-500 truncate">{product.description}</p>
+                    <p
+                      className="text-sm text-gray-500 truncate overflow-hidden text-ellipsis"
+                      title={product.description}
+                    >
+                      {product.description}
+                    </p>
                   </div>
                   <button
                     onClick={() => deleteProduct(product.id)}

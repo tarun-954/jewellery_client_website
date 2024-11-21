@@ -39,7 +39,7 @@ const Signup = () => {
             </p>
           </div>
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="rounded-md shadow-sm -space-y-px">
+            <div className="rounded-md shadow-sm ">
               <div className="mb-4">
                 <label htmlFor="name" className="sr-only">
                   Full name
@@ -71,10 +71,12 @@ const Signup = () => {
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
+              
               <div>
                 <label htmlFor="password" className="sr-only">
                   Password
                 </label>
+
                 <input
                   id="password"
                   name="password"
@@ -102,7 +104,7 @@ const Signup = () => {
         {/* Image Section */}
         <div className="hidden sm:block sm:w-1/2">
           <img
-            src="https://img.freepik.com/free-photo/3d-render-secure-login-password-illustration_107791-16640.jpg?t=st=1732217349~exp=1732220949~hmac=dddce2a1b7d189230cabfe274e03d6e36d7757a281ed9853f7de4e34b14c3109&w=740"
+            src="https://img.freepik.com/free-vector/sign-up-concept-illustration_114360-7865.jpg?t=st=1732220535~exp=1732224135~hmac=cebe883dd1a3628fc4ab6d32d28a3da01c7b63f8985961dcd4109c6cc0eee226&w=740"
             alt="Signup illustration"
             className="w-full h-full object-cover"
           />

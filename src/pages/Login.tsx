@@ -23,7 +23,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-wh flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="flex bg-white rounded-lg shadow-lg  overflow-hidden max-w-4xl w-full">
         {/* Login Section */}
         <div className="w-full sm:w-1/2 p-8 space-y-8 ">
