@@ -23,12 +23,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen ring-amber-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="flex bg-white rounded-lg shadow-lg  overflow-hidden max-w-4xl w-full">
         {/* Login Section */}
         <div className="w-full sm:w-1/2 p-8 space-y-8 ">
           <div>
-            <h2 className="text-center text-4xl font-serif text-amber-900">
+            <h2 className="text-center text-3xl font-serif text-amber-900">
               Welcome Back
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">

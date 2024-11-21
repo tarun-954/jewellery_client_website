@@ -20,7 +20,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="flex bg-white rounded-lg shadow-lg overflow-hidden max-w-4xl w-full">
         {/* Signup Form Section */}
         <div className="w-full sm:w-1/2 p-8 space-y-8">
@@ -102,7 +102,7 @@ const Signup = () => {
         {/* Image Section */}
         <div className="hidden sm:block sm:w-1/2">
           <img
-            src="/path/to/signup-image.jpg"
+            src="https://img.freepik.com/free-photo/3d-render-secure-login-password-illustration_107791-16640.jpg?t=st=1732217349~exp=1732220949~hmac=dddce2a1b7d189230cabfe274e03d6e36d7757a281ed9853f7de4e34b14c3109&w=740"
             alt="Signup illustration"
             className="w-full h-full object-cover"
           />
