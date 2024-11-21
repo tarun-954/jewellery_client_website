@@ -24,6 +24,7 @@ function App() {
               <Navbar />
               <CartSidebar />
               <BookingButton />
+             
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
