@@ -82,7 +82,6 @@ const CategoryPage = () => {
                   {product.name}
                 </h3>
                 <p className="mt-1 text-gray-500">₹{product.price}</p>
-
                 <button 
                   onClick={() => addToCart(product)}
                   className="mt-3 w-full bg-amber-800 text-white px-4 py-2 rounded-md hover:bg-amber-900 transition"

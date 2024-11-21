@@ -10,7 +10,8 @@ import Admin from './pages/Admin';
 import CategoryPage from './pages/CategoryPage';
 import ProductDetail from './pages/ProductDetail';
 import { AuthProvider } from './context/AuthContext';
-import { CartProvider } from './context/CartContext';
+import { CartProvider, useCart } from './context/CartContext';
+import Checkout from './pages/Checkout';
 import { ProductProvider } from './context/ProductContext';
 
 function App() {
@@ -30,6 +31,8 @@ function App() {
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/category/:id" element={<CategoryPage />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/checkout" element={<Checkout />} />
+
               </Routes>
             </div>
           </Router>
