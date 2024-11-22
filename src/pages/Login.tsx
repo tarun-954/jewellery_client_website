@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,6 +7,18 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Load the Lottie player dynamically
+  
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs';
+    script.type = 'module';
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,10 +35,19 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-wh flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="flex bg-white rounded-lg shadow-lg  overflow-hidden max-w-4xl w-full">
+    <div
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+      style={{
+        backgroundImage:
+          "url('https://img.freepik.com/free-photo/top-view-pink-wedding-arrangement-with-pink-background_23-2148243934.jpg?t=st=1732277356~exp=1732280956~hmac=6dc07ffa6d2396507068797b0536a280a75297203b991dec581d16186c57a018&w=996')",
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
+      }}
+    >
+      <div className="flex bg-white rounded-lg shadow-lg overflow-hidden max-w-3xl w-full">
         {/* Login Section */}
-        <div className="w-full sm:w-1/2 p-8 space-y-8 ">
+        <div className="w-full sm:w-1/2 p-8 space-y-8">
           <div>
             <h2 className="text-center text-3xl font-serif text-amber-900">
               Welcome Back
@@ -85,13 +106,19 @@ const Login = () => {
                   type="checkbox"
                   className="h-4 w-4 text-amber-800 focus:ring-amber-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-900"
+                >
                   Remember me
                 </label>
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-amber-800 hover:text-amber-900">
+                <a
+                  href="#"
+                  className="font-medium text-amber-800 hover:text-amber-900"
+                >
                   Forgot your password?
                 </a>
               </div>
@@ -109,12 +136,19 @@ const Login = () => {
         </div>
 
         {/* Image Section */}
-        <div className="hidden sm:block sm:w-1/2">
-          <img
-            src="https://img.freepik.com/free-photo/3d-render-secure-login-password-illustration_107791-16640.jpg?t=st=1732217349~exp=1732220949~hmac=dddce2a1b7d189230cabfe274e03d6e36d7757a281ed9853f7de4e34b14c3109&w=740"
-            alt="Professional illustration"
-            className="w-full h-full object-cover"
-          />
+        <div className="hidden sm:block sm:w-1/2 relative">
+          
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <dotlottie-player
+              src="https://lottie.host/b7886a5b-0bc5-4aed-be5d-e8ec39dfbf27/g445aQovzO.lottie"
+              background="transparent"
+              // speed="1"
+              speed={1}
+              style={{ width: '350px', height: '350px' }}
+              loop
+              autoplay
+            />
+          </div>
         </div>
       </div>
     </div>
