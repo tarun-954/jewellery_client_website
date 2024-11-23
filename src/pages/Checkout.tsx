@@ -32,7 +32,6 @@ export default function Checkout() {
       return;
     }
     try {
-      // Simulate order placement
       toast.success('Order placed successfully!');
       navigate('/order-confirmation');
     } catch (error) {
@@ -42,7 +41,17 @@ export default function Checkout() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
+        <div className="mb-4">
+          <dotlottie-player
+            src="https://lottie.host/eb5e56da-075b-458c-a8e4-48d3449fc69f/cXJs57yvOB.lottie"
+            background="transparent"
+            speed={0.5}
+            style={{ width: '300px', height: '300px' }}
+            loop
+            autoplay
+          />
+        </div>
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Your Cart is Empty</h2>
           <p className="text-gray-600 mb-6">Please add items to your cart before proceeding to checkout.</p>
@@ -60,11 +69,10 @@ export default function Checkout() {
   const calculateTotal = () =>
     items
       .reduce((sum, item) => {
-        // Clean the price by removing dollar sign and commas
         const cleanPrice = parseFloat(item.price.replace('$', '').replace(',', ''));
         return sum + cleanPrice * item.quantity;
       }, 0)
-      .toFixed(2); // Ensure the total is rounded to 2 decimal places
+      .toFixed(2);
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">

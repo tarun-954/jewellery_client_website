@@ -9,7 +9,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   // Load the Lottie player dynamically
-  
+
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs';
@@ -129,6 +129,7 @@ const Login = () => {
                 type="submit"
                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-amber-800 hover:bg-amber-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
               >
+                   
                 Sign in
               </button>
             </div>
