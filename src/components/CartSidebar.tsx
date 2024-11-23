@@ -1,11 +1,11 @@
 import React from 'react';
 import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useNavigate } from 'react-router-dom';  // Import useNavigate hook
+import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 
 const CartSidebar = () => {
   const { items, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, totalItems } = useCart();
-  const navigate = useNavigate();  // Initialize navigate
+  const navigate = useNavigate(); // Initialize navigate
 
   // Calculate total price
   const total = items.reduce((sum, item) => {
@@ -37,12 +37,21 @@ const CartSidebar = () => {
             </div>
 
             {/* Cart items */}
-            <div className="flex-1 px-4 py-6 sm:px-6 overflow-auto">
+            <div className="flex-1 px-4 py-6 sm:px-6 overflow-hidden">
               {items.length === 0 ? (
                 <div className="text-center py-12">
-                  <ShoppingBag className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">Your cart is empty</h3>
-                  <p className="mt-1 text-sm text-gray-500">Start adding some items to your cart!</p>
+                  {/* Add dotLottie player for empty cart */}
+                  <dotlottie-player
+                    src="https://lottie.host/eb5e56da-075b-458c-a8e4-48d3449fc69f/cXJs57yvOB.lottie"
+                    background="transparent"
+                    speed={1}
+                    style={{ width: '300px', height: '300px', margin: '0 auto' }}
+                    loop
+                    autoplay
+                  ></dotlottie-player>
+                  <h3 className="mt-4 text-lg font-medium text-gray-900">Your cart is empty</h3>
+                  <p className="mt-2 text-sm text-gray-500">Start adding some items to your cart!</p>
+                 
                 </div>
               ) : (
                 <div className="space-y-8">

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
-
 export default function Checkout() {
   const navigate = useNavigate();
   const { items, totalItems, updateQuantity, removeFromCart } = useCart();
@@ -47,7 +46,7 @@ export default function Checkout() {
           src="https://lottie.host/7f829be9-9f88-47f2-8bcf-196d7651b7f5/18cjxaO2m5.lottie"
           background="transparent"
           speed={1}
-          style={{ width: '300px', height: '300px' }}
+          style={{ width: '350px', height: '350px' }}
           loop
           autoplay
         ></dotlottie-player>
@@ -226,3 +225,4 @@ export default function Checkout() {
     </div>
   );
 }
+

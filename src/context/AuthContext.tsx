@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface User {
   email: string;
@@ -18,21 +18,35 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  // Load user details from localStorage on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('userDetails');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
   const login = async (email: string, password: string) => {
     // Mock admin login - in a real app, this would be handled by your backend
+    let loggedInUser;
     if (email === 'admin@chanchal.com' && password === 'admin123') {
-      setUser({ email, name: 'Admin', isAdmin: true });
+      loggedInUser = { email, name: 'Admin', isAdmin: true };
     } else {
-      setUser({ email, name: 'Customer' });
+      loggedInUser = { email, name: 'Customer' };
     }
+    setUser(loggedInUser);
+    localStorage.setItem('userDetails', JSON.stringify(loggedInUser));
   };
 
   const signup = async (email: string, password: string, name: string) => {
-    setUser({ email, name });
+    const newUser = { email, name };
+    setUser(newUser);
+    localStorage.setItem('userDetails', JSON.stringify(newUser));
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('userDetails');
   };
 
   return (
