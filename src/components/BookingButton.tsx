@@ -15,6 +15,13 @@ const BookingButton = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Store booking data in localStorage
+    const storedBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+    const newBooking = { ...bookingData };
+    storedBookings.push(newBooking);
+    localStorage.setItem('bookings', JSON.stringify(storedBookings));
+
     setConfirmationMessage(
       `🎉 Appointment successfully placed for ${bookingData.date} at ${bookingData.time}!`
     );

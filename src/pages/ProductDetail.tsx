@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { ArrowLeft, Heart, Share2 } from 'lucide-react';
+import BookingButton from '../components/BookingButton'; // Import the BookingButton component
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { products } = useProducts();
   const { addToCart } = useCart();
+
+  const [isBookingModalOpen, setBookingModalOpen] = useState(false); // Manage modal state
 
   const product = products.find(p => p.id === Number(id));
   const recommendations = products
@@ -18,6 +21,11 @@ const ProductDetail = () => {
   if (!product) {
     return <div>Product not found</div>;
   }
+
+  // Handle Book Store Visit button click
+  const handleBookStoreVisitClick = () => {
+    setBookingModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -81,10 +89,17 @@ const ProductDetail = () => {
               >
                 Add to Cart
               </button>
-         
-              <button className="w-full border border-amber-800 text-amber-800 px-6 py-3 rounded-md hover:bg-amber-50 transition">
+
+              {/* Book Store Visit Button */}
+              <button 
+                onClick={handleBookStoreVisitClick}
+                className="w-full border border-amber-800 text-amber-800 px-6 py-3 rounded-md hover:bg-amber-50 transition"
+              >
                 Book Store Visit
               </button>
+
+              {/* Booking Button Modal */}
+              {isBookingModalOpen && <BookingButton />}
             </div>
           </div>
         </div>

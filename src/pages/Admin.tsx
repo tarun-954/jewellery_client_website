@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Plus, Package, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Package, Trash2, CheckCircle } from 'lucide-react';
 import { useProducts } from '../context/ProductContext';
+import { Calendar } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -9,6 +10,16 @@ interface Product {
   image: string;
   category: string;
   description: string;
+}
+
+interface Booking {
+  name: string;
+  date: string;
+  time: string;
+  phone: string;
+  id: string;
+  status: 'Pending' | 'Completed';
+  image: string;
 }
 
 const Admin = () => {
@@ -20,6 +31,20 @@ const Admin = () => {
     category: 'necklaces',
     description: ''
   });
+
+  // Load bookings from localStorage
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  useEffect(() => {
+    const storedBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+    const validBookings: Booking[] = storedBookings.map((booking: any) => ({
+      ...booking,
+      id: booking.id || `${Date.now()}-${Math.random()}`, // Ensure unique IDs if missing
+      status: booking.status === 'Completed' ? 'Completed' : 'Pending',
+      image: booking.image || '',
+    }));
+    setBookings(validBookings);
+    localStorage.setItem('bookings', JSON.stringify(validBookings)); // Update storage
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,11 +58,29 @@ const Admin = () => {
     });
   };
 
+  const handleDeleteBooking = (id: string) => {
+    try {
+      const updatedBookings = bookings.filter((booking) => booking.id !== id);
+      setBookings(updatedBookings);
+      localStorage.setItem('bookings', JSON.stringify(updatedBookings)); // Persist remaining bookings
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+    }
+  };
+
+  const handleCompleteBooking = (id: string) => {
+    const updatedBookings: Booking[] = bookings.map((booking) =>
+      booking.id === id ? { ...booking, status: 'Completed' } : booking
+    );
+    setBookings(updatedBookings);
+    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50 p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-serif text-amber-900 mb-8">Admin Dashboard</h1>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Add Product Form */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -47,52 +90,41 @@ const Admin = () => {
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Product Name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                 <input
                   type="text"
                   value={newProduct.name}
-                  onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setNewProduct((prev) => ({ ...prev, name: e.target.value }))} 
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
                   required
                 />
               </div>
-              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Price
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
                 <input
                   type="text"
                   value={newProduct.price}
-                  onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value }))}
+                  onChange={(e) => setNewProduct((prev) => ({ ...prev, price: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
                   placeholder="₹999"
                   required
                 />
               </div>
-              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Image URL
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
                 <input
                   type="url"
                   value={newProduct.image}
-                  onChange={(e) => setNewProduct(prev => ({ ...prev, image: e.target.value }))}
+                  onChange={(e) => setNewProduct((prev) => ({ ...prev, image: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
                   required
                 />
               </div>
-              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                 <select
                   value={newProduct.category}
-                  onChange={(e) => setNewProduct(prev => ({ ...prev, category: e.target.value }))}
+                  onChange={(e) => setNewProduct((prev) => ({ ...prev, category: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
                 >
                   <option value="necklaces">Necklaces</option>
@@ -105,21 +137,17 @@ const Admin = () => {
                   <option value="bangles">Bangles</option>
                 </select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea
                   value={newProduct.description}
-                  onChange={(e) => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) => setNewProduct((prev) => ({ ...prev, description: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
                   rows={4}
                   placeholder="Enter a detailed description of the product..."
                   required
                 />
               </div>
-              
               <button
                 type="submit"
                 className="w-full bg-amber-800 text-white px-4 py-2 rounded-md hover:bg-amber-900 transition"
@@ -163,6 +191,70 @@ const Admin = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Bookings Section */}
+        <div className="bg-white p-4 rounded-lg shadow-sm mt-10">
+          <h2 className="text-2xl font-serif text-gray-900 mb-6 flex items-center">
+            <Calendar className="w-6 h-6 mr-2" />
+            Booked Appointments
+          </h2>
+
+          {/* Header for the booking details */}
+          <div className="grid grid-cols-6 gap-5 text-sm ms-3 font-medium text-gray-700 mb-4">
+            <div>Name</div>
+            {/* <div>Image</div> */}
+            <div>Date</div>
+            <div>Time</div>
+            <div>Phone</div>
+            <div>Status</div>
+            <div>Options</div>
+          </div>
+
+          {/* Bookings List */}
+          <div className="space-y-4 max-h-[600px] overflow-y-auto">
+            {bookings.length === 0 ? (
+              <p className="text-gray-500">No appointments booked yet.</p>
+            ) : (
+              bookings.map((booking) => (
+                <div
+                  key={booking.id}
+                  className={`grid grid-cols-6 gap-4 p-4 border rounded-lg ${
+                    booking.status === 'Completed' ? 'bg-green-200' : 'bg-red-200'
+                  }`}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div>{booking.name}</div>
+                    <img
+                      src={booking.image || 'https://cdni.iconscout.com/illustration/premium/thumb/online-hotel-booking-illustration-download-in-svg-png-gif-file-formats--app-reservation-pack-holidays-illustrations-7706271.png'}
+                      alt={booking.name}
+                      className="w-12 h-12 object-cover rounded-full"
+                    />
+                  </div>
+                  <div>{booking.date}</div>
+                  <div>{booking.time}</div>
+                  <div>{booking.phone}</div>
+                  <div className={`text-sm font-medium ${booking.status === 'Completed' ? 'text-green-700' : 'text-red-700'}`}>
+                    {booking.status}
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleCompleteBooking(booking.id)}
+                      className="text-green-600 hover:text-green-800"
+                    >
+                      <CheckCircle className="w-5 ms-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteBooking(booking.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

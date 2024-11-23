@@ -32,6 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (email === 'admin@chanchal.com' && password === 'admin123') {
       loggedInUser = { email, name: 'Admin', isAdmin: true };
     } else {
+      
       loggedInUser = { email, name: 'Customer' };
     }
     setUser(loggedInUser);
