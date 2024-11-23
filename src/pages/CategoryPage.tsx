@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Filter } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -12,6 +12,11 @@ const CategoryPage = () => {
   const { getProductsByCategory } = useProducts();
   
   const categoryProducts = getProductsByCategory(id || '');
+
+  // Scroll to top when the category page is loaded or when `id` changes
+  useEffect(() => {
+    window.scrollTo(0, 0);  // Scroll to top of the page
+  }, [id]); // This ensures that the page scrolls to the top whenever the category changes
 
   return (
     <div className="min-h-screen bg-white">

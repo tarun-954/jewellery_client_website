@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { User, ShoppingCart } from 'lucide-react';
@@ -8,6 +8,8 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const { setIsCartOpen, totalItems } = useCart();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
@@ -16,7 +18,26 @@ const Navbar = () => {
   const handleLogout = () => {
     logout();
     setDropdownOpen(false);
+    navigate('/login'); // Redirect to the login page after logout
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="bg-white shadow-sm">
@@ -49,7 +70,7 @@ const Navbar = () => {
 
             {/* User Dropdown */}
             {user ? (
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleDropdown}
                   className="text-gray-700 hover:text-amber-800 flex items-center"
@@ -59,11 +80,11 @@ const Navbar = () => {
 
                 {dropdownOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-auto"
+                    className="absolute right-0 mt-2 w-100 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-1 overflow-hidden"
                   >
                     <div className="px-4 py-3 bg-amber-100 rounded-t-lg">
-                      <p className="font-semibold text-amber-800">{user.name}</p>
-                      <p className="text-sm text-gray-600">{user.email}</p>
+                      <p className="font-semibold text-amber-800 truncate">{user.name}</p>
+                      <p className="text-sm text-gray-600 truncate">{user.email}</p>
                     </div>
                     <div className="divide-y divide-gray-200">
                       <button
