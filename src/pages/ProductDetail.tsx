@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { ArrowLeft, Heart, Share2 } from 'lucide-react';
-import BookingButton from '../components/BookingButton'; // Import the BookingButton component
+import Confetti from 'react-confetti';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -11,20 +11,51 @@ const ProductDetail = () => {
   const { products } = useProducts();
   const { addToCart } = useCart();
 
-  const [isBookingModalOpen, setBookingModalOpen] = useState(false); // Manage modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState('');
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [bookingData, setBookingData] = useState({
+    name: '',
+    date: '',
+    time: '',
+    phone: '',
+  });
 
-  const product = products.find(p => p.id === Number(id));
+  const product = products.find((p) => p.id === Number(id));
   const recommendations = products
-    .filter(p => p.category === product?.category && p.id !== product?.id)
+    .filter((p) => p.category === product?.category && p.id !== product?.id)
     .slice(0, 4);
 
   if (!product) {
     return <div>Product not found</div>;
   }
 
-  // Handle Book Store Visit button click
-  const handleBookStoreVisitClick = () => {
-    setBookingModalOpen(true);
+  const handleBookingSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Append new booking data to localStorage
+    const storedBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+    const newBooking = {
+      ...bookingData,
+      id: `${Date.now()}-${Math.random()}`,
+      status: 'Pending',
+      image: product.image || '',
+    };
+    const updatedBookings = [...storedBookings, newBooking];
+    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+
+    setConfirmationMessage(
+      `🎉 Appointment successfully placed for ${bookingData.date} at ${bookingData.time}!`
+    );
+    setIsModalOpen(false);
+    setBookingData({ name: '', date: '', time: '', phone: '' });
+    setShowConfetti(true);
+
+    // Automatically hide confetti and confirmation message after 5 seconds
+    setTimeout(() => {
+      setShowConfetti(false);
+      setConfirmationMessage('');
+    }, 5000);
   };
 
   return (
@@ -32,7 +63,7 @@ const ProductDetail = () => {
       {/* Top Navigation */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
@@ -90,16 +121,12 @@ const ProductDetail = () => {
                 Add to Cart
               </button>
 
-              {/* Book Store Visit Button */}
-              <button 
-                onClick={handleBookStoreVisitClick}
+              <button
+                onClick={() => setIsModalOpen(true)}
                 className="w-full border border-amber-800 text-amber-800 px-6 py-3 rounded-md hover:bg-amber-50 transition"
               >
                 Book Store Visit
               </button>
-
-              {/* Booking Button Modal */}
-              {isBookingModalOpen && <BookingButton />}
             </div>
           </div>
         </div>
@@ -111,8 +138,8 @@ const ProductDetail = () => {
           <h2 className="text-2xl font-serif text-gray-900 mb-8">You May Also Like</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {recommendations.map((rec) => (
-              <div 
-                key={rec.id} 
+              <div
+                key={rec.id}
                 className="group cursor-pointer"
                 onClick={() => navigate(`/product/${rec.id}`)}
               >
@@ -132,6 +159,94 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Booking Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h2 className="text-2xl font-serif text-amber-900 mb-4">Book a Store Visit</h2>
+            <form onSubmit={handleBookingSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                <input
+                  type="text"
+                  value={bookingData.name}
+                  onChange={(e) =>
+                    setBookingData((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={bookingData.date}
+                  onChange={(e) =>
+                    setBookingData((prev) => ({ ...prev, date: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                <input
+                  type="time"
+                  value={bookingData.time}
+                  onChange={(e) =>
+                    setBookingData((prev) => ({ ...prev, time: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={bookingData.phone}
+                  onChange={(e) =>
+                    setBookingData((prev) => ({ ...prev, phone: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div className="flex space-x-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-amber-800 text-white px-4 py-2 rounded-md hover:bg-amber-900 transition"
+                >
+                  Book Appointment
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confetti after successful booking */}
+      {showConfetti && <Confetti />}
+
+      {/* Success Notification */}
+      {confirmationMessage && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg">
+          {confirmationMessage}
+        </div>
+      )}
     </div>
   );
 };
