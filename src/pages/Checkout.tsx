@@ -32,6 +32,7 @@ export default function Checkout() {
       return;
     }
     try {
+      // Simulate order placement
       toast.success('Order placed successfully!');
       navigate('/order-confirmation');
     } catch (error) {
@@ -42,19 +43,19 @@ export default function Checkout() {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
-        <div className="mb-4">
-          <dotlottie-player
-            src="https://lottie.host/eb5e56da-075b-458c-a8e4-48d3449fc69f/cXJs57yvOB.lottie"
-            background="transparent"
-            speed={0.5}
-            style={{ width: '300px', height: '300px' }}
-            loop
-            autoplay
-          />
-        </div>
-        <div className="text-center">
+        <dotlottie-player
+          src="https://lottie.host/7f829be9-9f88-47f2-8bcf-196d7651b7f5/18cjxaO2m5.lottie"
+          background="transparent"
+          speed={1}
+          style={{ width: '300px', height: '300px' }}
+          loop
+          autoplay
+        ></dotlottie-player>
+        <div className="text-center mt-6">
           <h2 className="text-2xl font-bold mb-4">Your Cart is Empty</h2>
-          <p className="text-gray-600 mb-6">Please add items to your cart before proceeding to checkout.</p>
+          <p className="text-gray-600 mb-6">
+            Please add items to your cart before proceeding to checkout.
+          </p>
           <button
             onClick={() => navigate('/')}
             className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
