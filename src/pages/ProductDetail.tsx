@@ -10,6 +10,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { products } = useProducts();
   const { addToCart } = useCart();
+  
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('');
@@ -100,12 +101,21 @@ const ProductDetail = () => {
               <p className="text-2xl text-amber-800">{product.price}</p>
             </div>
 
-            <div className="prose prose-amber">
-              <h3>Description</h3>
-              <p>{product.description}</p>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Description</h3>
+              <div
+                className="text-gray-700 overflow-hidden text-ellipsis"
+                style={{
+                  maxHeight: '8rem',
+                  overflowY: 'auto',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {product.description}
+              </div>
 
-              <h3>Details</h3>
-              <ul>
+              <h3 className="text-lg font-semibold text-gray-900">Details</h3>
+              <ul className="list-disc pl-5">
                 <li>Handcrafted with precision</li>
                 <li>Premium quality materials</li>
                 <li>Certified authenticity</li>
