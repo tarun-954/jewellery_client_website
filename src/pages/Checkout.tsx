@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
+import Confetti from 'react-confetti'; // Add this import
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { items, totalItems, updateQuantity, removeFromCart } = useCart();
@@ -16,6 +18,7 @@ export default function Checkout() {
     zipCode: '',
     paymentMethod: 'credit-card',
   });
+  const [showConfetti, setShowConfetti] = useState(false); // State for confetti
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData((prev) => ({
@@ -33,7 +36,11 @@ export default function Checkout() {
     try {
       // Simulate order placement
       toast.success('Order placed successfully!');
-      navigate('/order-confirmation');
+      setShowConfetti(true); // Trigger confetti
+      setTimeout(() => {
+        setShowConfetti(false); // Hide confetti after 3 seconds
+        navigate('/');
+      }, 3000);
     } catch (error) {
       toast.error('Failed to place the order. Please try again.');
     }
@@ -77,8 +84,8 @@ export default function Checkout() {
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="container mx-auto px-4 lg:px-8">
+        {showConfetti && <Confetti recycle={false} numberOfPieces={300} />} {/* Add confetti */}
         <h1 className="text-3xl font-bold mb-6">Checkout</h1>
-
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Shipping Information */}
           <div className="lg:col-span-2 bg-white rounded shadow p-6">
@@ -216,7 +223,7 @@ export default function Checkout() {
               ))}
             </div>
             <div className="border-t mt-4 pt-4 text-right">
-              <h3 className="text-lg font-bold">Total: ${calculateTotal()}</h3>
+              <h3 className="text-lg font-bold">Total: ₹{calculateTotal()}</h3>
               <p className="text-sm text-gray-600">{totalItems} item(s)</p>
             </div>
           </div>
@@ -225,4 +232,3 @@ export default function Checkout() {
     </div>
   );
 }
-

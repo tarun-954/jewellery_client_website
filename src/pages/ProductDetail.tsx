@@ -10,7 +10,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { products } = useProducts();
   const { addToCart } = useCart();
-  
+
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('');
@@ -98,7 +98,7 @@ const ProductDetail = () => {
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-serif text-gray-900 mb-2">{product.name}</h1>
-              <p className="text-2xl text-amber-800">{product.price}</p>
+              <p className="text-2xl text-amber-800">₹{product.price}</p>
             </div>
 
             <div className="space-y-4">
@@ -162,7 +162,7 @@ const ProductDetail = () => {
                 </div>
                 <div className="mt-4">
                   <h3 className="text-lg font-medium text-gray-900">{rec.name}</h3>
-                  <p className="text-amber-800">{rec.price}</p>
+                  <p className="text-amber-800">₹{rec.price}</p>
                 </div>
               </div>
             ))}
