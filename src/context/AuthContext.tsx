@@ -28,15 +28,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string) => {
     // Mock admin login - in a real app, this would be handled by your backend
-    let loggedInUser;
     if (email === 'admin@chanchal.com' && password === 'admin123') {
-      loggedInUser = { email, name: 'Admin', isAdmin: true };
-    } else {
-      
-      loggedInUser = { email, name: 'Customer' };
+      const loggedInUser = { email, name: 'Admin', isAdmin: true };
+      setUser(loggedInUser);
+      localStorage.setItem('userDetails', JSON.stringify(loggedInUser));
+      return;
     }
-    setUser(loggedInUser);
-    localStorage.setItem('userDetails', JSON.stringify(loggedInUser));
+    // For demo, only allow admin login. Otherwise, throw error.
+    throw new Error('Invalid email or password');
   };
 
   const signup = async (email: string, password: string, name: string) => {

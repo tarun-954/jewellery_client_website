@@ -7,6 +7,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   // Load the Lottie player dynamically
 
@@ -22,6 +23,7 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     try {
       await login(email, password);
       if (email === 'admin@chanchal.com' && password === 'admin123') {
@@ -29,20 +31,24 @@ const Login = () => {
       } else {
         navigate('/');
       }
-    } catch (error) {
-      console.error('Login failed:', error);
+    } catch (error: any) {
+      setError(error.message || 'Login failed. Please try again.');
     }
   };
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 no-scrollbar"
       style={{
-        backgroundImage:
-          "url('https://img.freepik.com/free-photo/top-view-pink-wedding-arrangement-with-pink-background_23-2148243934.jpg?t=st=1732277356~exp=1732280956~hmac=6dc07ffa6d2396507068797b0536a280a75297203b991dec581d16186c57a018&w=996')",
-        backgroundSize: 'cover',
+       backgroundColor: '#B1AB86',
+       backgroundImage:
+         "url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuLf1NM3PcR6ZXNcAooYjw_ylzg2H2adWRVg&s')",
+        backgroundSize: '',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
+        overflow: 'hidden',
+        scrollbarWidth: 'none', // Firefox
+        msOverflowStyle: 'none', // IE 10+
       }}
     >
       <div className="flex bg-white rounded-lg shadow-lg overflow-hidden max-w-3xl w-full">
@@ -63,6 +69,9 @@ const Login = () => {
             </p>
           </div>
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="text-red-600 text-center mb-4">{error}</div>
+            )}
             <div className="rounded-md shadow-sm -space-y-px">
               <div className="mb-4">
                 <label htmlFor="email-address" className="sr-only">

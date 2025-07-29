@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
 import Confetti from 'react-confetti'; // Add this import
+import { formatPrice } from '../utils/priceUtils';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -75,10 +76,7 @@ export default function Checkout() {
 
   const calculateTotal = () =>
     items
-      .reduce((sum, item) => {
-        const cleanPrice = parseFloat(item.price.replace('$', '').replace(',', ''));
-        return sum + cleanPrice * item.quantity;
-      }, 0)
+      .reduce((sum, item) => sum + item.price * item.quantity, 0)
       .toFixed(2);
 
   return (
@@ -196,7 +194,7 @@ export default function Checkout() {
                   <div className="flex-1 ml-4">
                     <h3 className="font-semibold">{item.name}</h3>
                     <div className="text-sm text-gray-600">
-                      {item.price} × {item.quantity}
+                      {formatPrice(item.price)} × {item.quantity}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -223,7 +221,7 @@ export default function Checkout() {
               ))}
             </div>
             <div className="border-t mt-4 pt-4 text-right">
-              <h3 className="text-lg font-bold">Total: ₹{calculateTotal()}</h3>
+              <h3 className="text-lg font-bold">Total: {formatPrice(Number(calculateTotal()))}</h3>
               <p className="text-sm text-gray-600">{totalItems} item(s)</p>
             </div>
           </div>

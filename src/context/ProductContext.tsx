@@ -58,7 +58,13 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   // Initialize state with data from localStorage or initial products
   const [products, setProducts] = useState<Product[]>(() => {
     const savedProducts = localStorage.getItem('products');
-    return savedProducts ? JSON.parse(savedProducts) : initialProducts;
+    let loaded = savedProducts ? JSON.parse(savedProducts) : initialProducts;
+    // Migrate price to number if needed
+    loaded = loaded.map((p: any) => ({
+      ...p,
+      price: typeof p.price === 'string' ? Number(p.price.replace(/[^\d.]/g, '')) : p.price
+    }));
+    return loaded;
   });
 
   // Save to localStorage whenever products change
@@ -68,7 +74,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const addProduct = (product: Omit<Product, 'id'>) => {
     const newId = Math.max(...products.map(p => p.id), 0) + 1;
-    const newProduct = { ...product, id: newId };
+    const newProduct = { ...product, id: newId, price: Number(product.price) };
     setProducts(prev => [...prev, newProduct]);
   };
 

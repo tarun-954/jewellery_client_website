@@ -2,16 +2,14 @@ import React from 'react';
 import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
+import { formatPrice } from '../utils/priceUtils';
 
 const CartSidebar = () => {
   const { items, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, totalItems } = useCart();
   const navigate = useNavigate(); // Initialize navigate
 
   // Calculate total price
-  const total = items.reduce((sum, item) => {
-    const price = parseFloat(item.price.replace('$', '').replace(',', ''));
-    return sum + price * item.quantity;
-  }, 0);
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   if (!isCartOpen) return null;
 
@@ -64,7 +62,7 @@ const CartSidebar = () => {
                       />
                       <div className="ml-4 flex-1">
                         <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
-                        <p className="mt-1 text-sm text-gray-500">₹{item.price}</p>
+                        <p className="mt-1 text-sm text-gray-500">{formatPrice(item.price)}</p>
                         <div className="mt-2 flex items-center">
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -97,7 +95,7 @@ const CartSidebar = () => {
             <div className="border-t border-gray-200 px-4 py-6 sm:px-6">
               <div className="flex justify-between text-base font-medium text-gray-900">
                 <p>Subtotal</p>
-                <p>₹{total.toFixed(2)}</p>
+                <p>{formatPrice(total)}</p>
               </div>
               <p className="mt-0.5 text-sm text-gray-500">Shipping and taxes calculated at checkout.</p>
               <div className="mt-6">

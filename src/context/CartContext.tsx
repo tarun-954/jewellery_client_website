@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 interface CartItem {
   id: number;
   name: string;
-  price: string;
+  price: number; // changed from string to number
   image: string;
   quantity: number;
 }
@@ -27,6 +27,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addToCart = (product: Omit<CartItem, 'quantity'>) => {
     setItems(currentItems => {
       const existingItem = currentItems.find(item => item.id === product.id);
+      const price = typeof product.price === 'string' ? Number(product.price.replace(/[^\d.]/g, '')) : product.price;
       if (existingItem) {
         return currentItems.map(item =>
           item.id === product.id
@@ -34,7 +35,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             : item
         );
       }
-      return [...currentItems, { ...product, quantity: 1 }];
+      return [...currentItems, { ...product, price, quantity: 1 }];
     });
     setIsCartOpen(true);
   };

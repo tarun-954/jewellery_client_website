@@ -4,6 +4,7 @@ import { useProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { ArrowLeft, Heart, Share2 } from 'lucide-react';
 import Confetti from 'react-confetti';
+import { formatPrice } from '../utils/priceUtils';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -98,7 +99,7 @@ const ProductDetail = () => {
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-serif text-gray-900 mb-2">{product.name}</h1>
-              <p className="text-2xl text-amber-800">₹{product.price}</p>
+              <p className="text-2xl text-amber-800">{formatPrice(product.price)}</p>
             </div>
 
             <div className="space-y-4">
@@ -162,7 +163,7 @@ const ProductDetail = () => {
                 </div>
                 <div className="mt-4">
                   <h3 className="text-lg font-medium text-gray-900">{rec.name}</h3>
-                  <p className="text-amber-800">₹{rec.price}</p>
+                  <p className="text-amber-800">{formatPrice(rec.price)}</p>
                 </div>
               </div>
             ))}

@@ -13,7 +13,7 @@ const categories = [
   {
     id: 'rings',
     title: 'Rings',
-    image: 'https://www.maioradiamonds.in/image/cache/catalog/products/rings/md-r135/MD-R135%20-700x700.jpg',
+    image: 'https://i.pinimg.com/736x/ba/74/fe/ba74fe7c786f48c04adc7323151eb19a.jpg',
     description: 'Stunning rings that make a statement',
   },
   {
@@ -31,7 +31,7 @@ const categories = [
   {
     id: 'wedding',
     title: 'Wedding Collection',
-    image: 'https://chotteylal.com/cdn/shop/files/AME160167_711c9288-0cdf-492e-a4d7-ea93d6872a74_grande.jpg?v=1683963262',
+    image: 'https://shaadiwish.com/blog/wp-content/uploads/2023/02/Kiara-Advani-and-Sidharth-Malhotra%E2%80%99s-Dreamy-Jaisalmer-Wedding-1.jpg',
     description: 'Special pieces for your special day',
   },
   {

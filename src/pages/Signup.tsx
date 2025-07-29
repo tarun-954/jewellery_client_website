@@ -23,11 +23,13 @@ const Signup = () => {
     <div
       className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
       style={{
-        backgroundImage:
-          "url('https://img.freepik.com/free-photo/top-view-pink-wedding-arrangement-with-pink-background_23-2148243934.jpg?t=st=1732277356~exp=1732280956~hmac=6dc07ffa6d2396507068797b0536a280a75297203b991dec581d16186c57a018&w=996')",
-        backgroundSize: 'cover',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
+        backgroundColor: '#B1AB86',
+        // backgroundImage:
+      
+        //   "url('https://img.freepik.com/free-photo/top-view-pink-wedding-arrangement-with-pink-background_23-2148243934.jpg?t=st=1732277356~exp=1732280956~hmac=6dc07ffa6d2396507068797b0536a280a75297203b991dec581d16186c57a018&w=996')",
+        // backgroundSize: 'cover',
+        // backgroundRepeat: 'no-repeat',
+        // backgroundPosition: 'center',
       }}
     >
       <div className="flex bg-white rounded-lg shadow-lg overflow-hidden max-w-3xl w-full">
