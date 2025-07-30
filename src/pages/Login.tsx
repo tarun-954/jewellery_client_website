@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const { login } = useAuth(); // Make sure this is correctly implemented
   const navigate = useNavigate();
-  const [error, setError] = useState('');
-
-  // Load the Lottie player dynamically
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -21,18 +19,15 @@ const Login = () => {
     };
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     try {
-      await login(email, password);
-      if (email === 'admin@chanchal.com' && password === 'admin123') {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
-    } catch (error: any) {
-      setError(error.message || 'Login failed. Please try again.');
+      await login(email, password); // Should be defined in AuthContext
+      toast.success('Login successful!');
+      navigate('/');
+    } catch (error) {
+      console.error('Login Error:', error);
+      toast.error(error?.message || 'Login failed. Please try again.');
     }
   };
 
@@ -40,19 +35,18 @@ const Login = () => {
     <div
       className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 no-scrollbar"
       style={{
-       backgroundColor: '#B1AB86',
-       backgroundImage:
-         "url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuLf1NM3PcR6ZXNcAooYjw_ylzg2H2adWRVg&s')",
+        backgroundColor: '#B1AB86',
+        backgroundImage:
+          "url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuLf1NM3PcR6ZXNcAooYjw_ylzg2H2adWRVg&s')",
         backgroundSize: '',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
         overflow: 'hidden',
-        scrollbarWidth: 'none', // Firefox
-        msOverflowStyle: 'none', // IE 10+
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
       }}
     >
       <div className="flex bg-white rounded-lg shadow-lg overflow-hidden max-w-3xl w-full">
-        {/* Login Section */}
         <div className="w-full sm:w-1/2 p-8 space-y-8">
           <div>
             <h2 className="text-center text-3xl font-serif text-amber-900">
@@ -69,14 +63,8 @@ const Login = () => {
             </p>
           </div>
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="text-red-600 text-center mb-4">{error}</div>
-            )}
             <div className="rounded-md shadow-sm -space-y-px">
               <div className="mb-4">
-                <label htmlFor="email-address" className="sr-only">
-                  Email address
-                </label>
                 <input
                   id="email-address"
                   name="email"
@@ -90,9 +78,6 @@ const Login = () => {
                 />
               </div>
               <div className="mb-4">
-                <label htmlFor="password" className="sr-only">
-                  Password
-                </label>
                 <input
                   id="password"
                   name="password"
@@ -122,7 +107,6 @@ const Login = () => {
                   Remember me
                 </label>
               </div>
-
               <div className="text-sm">
                 <a
                   href="#"
@@ -138,26 +122,22 @@ const Login = () => {
                 type="submit"
                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-amber-800 hover:bg-amber-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
               >
-                   
                 Sign in
               </button>
             </div>
           </form>
         </div>
 
-        {/* Image Section */}
         <div className="hidden sm:block sm:w-1/2 relative">
-          
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <dotlottie-player
               src="https://lottie.host/b7886a5b-0bc5-4aed-be5d-e8ec39dfbf27/g445aQovzO.lottie"
               background="transparent"
-              // speed="1"
-              speed={1}
+              speed="1"
               style={{ width: '350px', height: '350px' }}
               loop
               autoplay
-            />
+            ></dotlottie-player>
           </div>
         </div>
       </div>

@@ -26,22 +26,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  const API_URL = 'http://localhost:5000/api'; // Change if backend is hosted elsewhere
+
   const login = async (email: string, password: string) => {
-    // Mock admin login - in a real app, this would be handled by your backend
-    if (email === 'admin@chanchal.com' && password === 'admin123') {
-      const loggedInUser = { email, name: 'Admin', isAdmin: true };
-      setUser(loggedInUser);
-      localStorage.setItem('userDetails', JSON.stringify(loggedInUser));
-      return;
+    try {
+      console.log('Attempting login for:', email);
+      const res = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      console.log('Login response status:', res.status);
+      console.log('Login response data:', data);
+      
+      if (!res.ok) throw new Error(data.message || 'Login failed');
+      
+      setUser(data.user);
+      localStorage.setItem('userDetails', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token);
+      console.log('Login successful, user set:', data.user);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-    // For demo, only allow admin login. Otherwise, throw error.
-    throw new Error('Invalid email or password');
   };
 
   const signup = async (email: string, password: string, name: string) => {
-    const newUser = { email, name };
-    setUser(newUser);
-    localStorage.setItem('userDetails', JSON.stringify(newUser));
+    try {
+      const res = await fetch(`${API_URL}/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Signup failed');
+      // Don't automatically login after signup - let user login manually
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
+    }
   };
 
   const logout = () => {
