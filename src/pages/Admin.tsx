@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Package, Trash2, CheckCircle } from 'lucide-react';
 import { useProducts } from '../context/ProductContext';
 import { Calendar } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface Product {
   id: number;
@@ -23,6 +25,15 @@ interface Booking {
 }
 
 const Admin = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user || !user.isAdmin) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
   const { addProduct, products, deleteProduct } = useProducts();
   const [newProduct, setNewProduct] = useState<Omit<Product, 'id'>>({
     name: '',
