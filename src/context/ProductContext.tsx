@@ -7,6 +7,8 @@ interface Product {
   image: string;
   category: string;
   description: string;
+  material?: string;
+  inStock?: boolean;
 }
 
 interface ProductContextType {
@@ -26,7 +28,9 @@ const initialProducts = [
     price: '₹1,299',
     image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80',
     category: 'necklaces',
-    description: 'Elegant diamond pendant necklace featuring a stunning solitaire diamond set in 18k white gold. Perfect for special occasions.'
+    description: 'Elegant diamond pendant necklace featuring a stunning solitaire diamond set in 18k white gold. Perfect for special occasions.',
+    material: '18k White Gold',
+    inStock: true
   },
   {
     id: 2,
@@ -34,7 +38,9 @@ const initialProducts = [
     price: '₹899',
     image: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&q=80',
     category: 'necklaces',
-    description: 'Classic pearl string necklace with perfectly matched cultured pearls. A timeless piece for any collection.'
+    description: 'Classic pearl string necklace with perfectly matched cultured pearls. A timeless piece for any collection.',
+    material: 'Silver',
+    inStock: true
   },
   {
     id: 3,
@@ -42,7 +48,9 @@ const initialProducts = [
     price: '₹999',
     image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80',
     category: 'rings',
-    description: 'Beautiful diamond ring featuring a round brilliant cut diamond in a classic setting. Ideal for engagements.'
+    description: 'Beautiful diamond ring featuring a round brilliant cut diamond in a classic setting. Ideal for engagements.',
+    material: '18k White Gold',
+    inStock: true
   },
   {
     id: 4,
@@ -50,7 +58,9 @@ const initialProducts = [
     price: '₹499',
     image: 'https://images.unsplash.com/photo-1635767798638-3665c302e27c?auto=format&fit=crop&q=80',
     category: 'earrings',
-    description: 'Elegant pearl drop earrings with diamond accents. Perfect for both formal events and everyday wear.'
+    description: 'Elegant pearl drop earrings with diamond accents. Perfect for both formal events and everyday wear.',
+    material: 'Silver',
+    inStock: true
   }
 ];
 
@@ -74,7 +84,13 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const addProduct = (product: Omit<Product, 'id'>) => {
     const newId = Math.max(...products.map(p => p.id), 0) + 1;
-    const newProduct = { ...product, id: newId, price: Number(product.price) };
+    const newProduct = { 
+      ...product, 
+      id: newId, 
+      price: typeof product.price === 'number' ? `₹${product.price}` : product.price,
+      material: product.material || '',
+      inStock: product.inStock !== undefined ? product.inStock : true
+    };
     setProducts(prev => [...prev, newProduct]);
   };
 
