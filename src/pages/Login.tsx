@@ -8,6 +8,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const { login } = useAuth(); // Make sure this is correctly implemented
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -24,7 +25,13 @@ const Login = () => {
     try {
       await login(email, password); // Should be defined in AuthContext
       toast.success('Login successful!');
-      navigate('/');
+      // Redirect based on admin status
+      const userDetails = JSON.parse(localStorage.getItem('userDetails') || '{}');
+      if (userDetails && userDetails.isAdmin) {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       console.error('Login Error:', error);
       toast.error(error?.message || 'Login failed. Please try again.');

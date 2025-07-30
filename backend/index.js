@@ -101,5 +101,23 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Set admin status endpoint
+app.post('/api/set-admin', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    user.isAdmin = true;
+    await user.save();
+    console.log('Admin status set for:', email);
+    res.json({ message: 'Admin status set successfully' });
+  } catch (err) {
+    console.error('Set admin error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`)); 
