@@ -6,6 +6,7 @@ interface CartItem {
   price: number; // changed from string to number
   image: string;
   quantity: number;
+  category?: string;
 }
 
 interface CartContextType {
@@ -13,6 +14,7 @@ interface CartContextType {
   addToCart: (product: Omit<CartItem, 'quantity'>) => void;
   removeFromCart: (id: number) => void;
   updateQuantity: (id: number, quantity: number) => void;
+  clearCart: () => void;
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
   totalItems: number;
@@ -53,6 +55,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
   };
 
+  const clearCart = () => {
+    setItems([]);
+  };
+
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -62,6 +68,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addToCart,
         removeFromCart,
         updateQuantity,
+        clearCart,
         isCartOpen,
         setIsCartOpen,
         totalItems,

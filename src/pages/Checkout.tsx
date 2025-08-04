@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAnalytics } from '../context/AnalyticsContext';
 import toast from 'react-hot-toast';
 import Confetti from 'react-confetti'; // Add this import
 import { formatPrice } from '../utils/priceUtils';
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { items, totalItems, updateQuantity, removeFromCart } = useCart();
+  const { items, totalItems, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { trackSale } = useAnalytics();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -35,9 +37,25 @@ export default function Checkout() {
       return;
     }
     try {
+      // Track sales for each item
+      for (const item of items) {
+        for (let i = 0; i < item.quantity; i++) {
+          await trackSale(
+            item.id,
+            item.name,
+            `₹${item.price}`,
+            item.category || 'unknown'
+          );
+        }
+      }
+
       // Simulate order placement
       toast.success('Order placed successfully!');
       setShowConfetti(true); // Trigger confetti
+      
+      // Clear cart after successful order
+      clearCart();
+      
       setTimeout(() => {
         setShowConfetti(false); // Hide confetti after 3 seconds
         navigate('/');

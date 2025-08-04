@@ -35,8 +35,152 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: String,
   isAdmin: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
 });
 const User = mongoose.model('User', userSchema);
+
+// Analytics schemas
+const loginAnalyticsSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  email: String,
+  timestamp: { type: Date, default: Date.now },
+  date: { type: String, default: () => new Date().toISOString().split('T')[0] }
+});
+const LoginAnalytics = mongoose.model('LoginAnalytics', loginAnalyticsSchema);
+
+const signupAnalyticsSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  email: String,
+  timestamp: { type: Date, default: Date.now },
+  date: { type: String, default: () => new Date().toISOString().split('T')[0] }
+});
+const SignupAnalytics = mongoose.model('SignupAnalytics', signupAnalyticsSchema);
+
+const productSaleSchema = new mongoose.Schema({
+  productId: Number,
+  productName: String,
+  price: String,
+  category: String,
+  timestamp: { type: Date, default: Date.now },
+  date: { type: String, default: () => new Date().toISOString().split('T')[0] }
+});
+const ProductSale = mongoose.model('ProductSale', productSaleSchema);
+
+// Analytics endpoints
+app.get('/api/analytics/login-signup', async (req, res) => {
+  try {
+    const { days = 7 } = req.query;
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(days));
+
+    const loginData = await LoginAnalytics.aggregate([
+      {
+        $match: {
+          timestamp: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: '$date',
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    const signupData = await SignupAnalytics.aggregate([
+      {
+        $match: {
+          timestamp: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: '$date',
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    res.json({ loginData, signupData });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.get('/api/analytics/sales', async (req, res) => {
+  try {
+    const { days = 7 } = req.query;
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(days));
+
+    const salesData = await ProductSale.aggregate([
+      {
+        $match: {
+          timestamp: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: '$date',
+          count: { $sum: 1 },
+          totalRevenue: { $sum: { $toDouble: { $replaceAll: { input: '$price', find: '₹', replacement: '' } } } }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    const categorySales = await ProductSale.aggregate([
+      {
+        $match: {
+          timestamp: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { count: -1 }
+      }
+    ]);
+
+    res.json({ salesData, categorySales });
+  } catch (error) {
+    console.error('Sales analytics error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Track product sale
+app.post('/api/analytics/track-sale', async (req, res) => {
+  try {
+    const { productId, productName, price, category } = req.body;
+    const sale = new ProductSale({
+      productId,
+      productName,
+      price,
+      category
+    });
+    await sale.save();
+    res.json({ message: 'Sale tracked successfully' });
+  } catch (error) {
+    console.error('Track sale error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // Signup endpoint
 app.post('/api/signup', async (req, res) => {
@@ -48,6 +192,14 @@ app.post('/api/signup', async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
     const user = new User({ name, email, password: hashed });
     await user.save();
+    
+    // Track signup analytics
+    const signupAnalytics = new SignupAnalytics({
+      userId: user._id,
+      email: user.email
+    });
+    await signupAnalytics.save();
+    
     console.log('User created successfully:', email);
     res.status(201).json({ message: 'User created' });
   } catch (err) {
@@ -85,6 +237,13 @@ app.post('/api/login', async (req, res) => {
       console.log('Invalid password for:', email);
       return res.status(400).json({ message: 'Invalid email or password' });
     }
+    
+    // Track login analytics
+    const loginAnalytics = new LoginAnalytics({
+      userId: user._id,
+      email: user.email
+    });
+    await loginAnalytics.save();
     
     console.log('Generating JWT token...');
     const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET, { expiresIn: '1d' });

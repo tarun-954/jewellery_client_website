@@ -126,7 +126,13 @@ const ProductDetail = () => {
 
             <div className="space-y-4">
               <button
-                onClick={() => addToCart(product)}
+                onClick={() => addToCart({
+                  id: product.id,
+                  name: product.name,
+                  price: typeof product.price === 'string' ? Number(product.price.replace(/[^\d.]/g, '')) : product.price,
+                  image: product.image,
+                  category: product.category
+                })}
                 className="w-full bg-amber-800 text-white px-6 py-3 rounded-md hover:bg-amber-900 transition"
               >
                 Add to Cart

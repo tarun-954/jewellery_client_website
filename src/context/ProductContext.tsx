@@ -69,10 +69,11 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [products, setProducts] = useState<Product[]>(() => {
     const savedProducts = localStorage.getItem('products');
     let loaded = savedProducts ? JSON.parse(savedProducts) : initialProducts;
-    // Migrate price to number if needed
+    // Ensure all products have category information
     loaded = loaded.map((p: any) => ({
       ...p,
-      price: typeof p.price === 'string' ? Number(p.price.replace(/[^\d.]/g, '')) : p.price
+      category: p.category || 'unknown',
+      price: typeof p.price === 'string' ? p.price : `₹${p.price}`
     }));
     return loaded;
   });
@@ -89,7 +90,8 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       id: newId, 
       price: typeof product.price === 'number' ? `₹${product.price}` : product.price,
       material: product.material || '',
-      inStock: product.inStock !== undefined ? product.inStock : true
+      inStock: product.inStock !== undefined ? product.inStock : true,
+      category: product.category || 'unknown'
     };
     setProducts(prev => [...prev, newProduct]);
   };
