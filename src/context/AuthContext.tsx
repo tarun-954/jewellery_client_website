@@ -10,11 +10,28 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, profileImage?: string) => Promise<void>;
   logout: () => void;
+  loginWithGoogle?: () => Promise<void>; // Placeholder for Google OAuth
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const handleOAuthSuccess = (token: string) => {
+  if (!token) return;
+  // Decode JWT (simple base64 decode, not verifying signature here)
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  const user = {
+    id: payload.id,
+    email: payload.email,
+    name: payload.name,
+    isAdmin: payload.isAdmin,
+    profileImage: payload.profileImage || '',
+  };
+  localStorage.setItem('userDetails', JSON.stringify(user));
+  localStorage.setItem('token', token);
+  // Optionally, you can trigger a custom event or use a state management solution to update the UI
+};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -53,12 +70,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string, profileImage?: string) => {
     try {
       const res = await fetch(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name, profileImage }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Signup failed');
@@ -69,13 +86,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Placeholder for Google OAuth
+  const loginWithGoogle = async () => {
+    window.location.href = 'http://localhost:5000/api/auth/google';
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('userDetails');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, loginWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );

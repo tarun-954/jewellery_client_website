@@ -1,10 +1,16 @@
 require('dotenv').config();
 const express = require('express');
+const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendBookingConfirmation, sendAdminConfirmation, sendOrderConfirmation, sendAdminOrderNotification } = require('./emailService');
+const multer = require('multer');
+const path = require('path');
+const session = require('express-session');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 // Check if JWT_SECRET is set
 if (!process.env.JWT_SECRET) {
@@ -12,9 +18,71 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
-const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Express session middleware
+app.use(session({
+  secret: process.env.JWT_SECRET || 'secret',
+  resave: false,
+  saveUninitialized: false,
+}));
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
+});
+
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: process.env.GOOGLE_CALLBACK_URL,
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    const email = profile.emails[0].value;
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = new User({
+        name: profile.displayName,
+        email,
+        password: '', // Not used for Google users
+        profileImage: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
+      });
+      await user.save();
+    } else {
+      // Update profile image if changed
+      if (profile.photos && profile.photos[0] && user.profileImage !== profile.photos[0].value) {
+        user.profileImage = profile.photos[0].value;
+        await user.save();
+      }
+    }
+    return done(null, user);
+  } catch (err) {
+    return done(err, null);
+  }
+}));
+
+// Google OAuth endpoints
+app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+app.get('/api/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login', session: true }), (req, res) => {
+  // Generate JWT and send to frontend (or set cookie)
+  const user = req.user;
+  const token = jwt.sign({ id: user._id, email: user.email, name: user.name, isAdmin: user.isAdmin, profileImage: user.profileImage }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  // Redirect to frontend with token (e.g., as query param)
+  res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/oauth-success?token=${token}`);
+});
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
@@ -89,6 +157,30 @@ mongoose.connect(process.env.MONGO_URI, {
   console.error('MongoDB connection error:', err);
 });
 
+// Multer storage config for profile images
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + '-' + file.fieldname + ext);
+  }
+});
+const upload = multer({ storage });
+
+// Serve uploads statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Profile image upload endpoint
+app.post('/api/upload-profile-image', upload.single('profileImage'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+  // Return the file path (relative URL)
+  res.json({ imageUrl: `/uploads/${req.file.filename}` });
+});
+
 // Test endpoint
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is running!' });
@@ -100,6 +192,7 @@ const userSchema = new mongoose.Schema({
   password: String,
   isAdmin: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
+  profileImage: { type: String, default: '' } // <-- Added for profile image
 });
 const User = mongoose.model('User', userSchema);
 
@@ -587,26 +680,26 @@ app.put('/api/orders/:id/status', async (req, res) => {
 
 // Signup endpoint
 app.post('/api/signup', async (req, res) => {
-  const { name, email, password } = req.body;
-  console.log('Signup request:', { name, email, password: password ? '***' : 'missing' });
   try {
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: 'Email already exists' });
-    const hashed = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashed });
-    await user.save();
-    
-    // Track signup analytics
-    const signupAnalytics = new SignupAnalytics({
-      userId: user._id,
-      email: user.email
+    const { email, password, name, profileImage } = req.body;
+    if (!email || !password || !name) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: 'User already exists' });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({
+      email,
+      password: hashedPassword,
+      name,
+      profileImage: profileImage || ''
     });
-    await signupAnalytics.save();
-    
-    console.log('User created successfully:', email);
-    res.status(201).json({ message: 'User created' });
-  } catch (err) {
-    console.error('Signup error:', err);
+    await user.save();
+    res.status(201).json({ message: 'User created successfully' });
+  } catch (error) {
+    console.error('Signup error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

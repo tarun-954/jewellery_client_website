@@ -17,6 +17,7 @@ import { ProductProvider } from './context/ProductContext';
 import { AnalyticsProvider } from './context/AnalyticsContext';
 import { OrderProvider } from './context/OrderContext';
 import { Toaster } from 'react-hot-toast';
+import OAuthSuccess from './pages/OAuthSuccess';
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
                     <Route path="/product/:id" element={<ProductDetail />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/my-orders" element={<MyOrders />} />
+                    <Route path="/oauth-success" element={<OAuthSuccess />} />
                   </Routes>
                 </div>
               </Router>
