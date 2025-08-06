@@ -188,13 +188,23 @@ const MyOrders = () => {
                             <div>
                               <h4 className="font-semibold text-gray-900 mb-2">Shipping Address</h4>
                               <div className="text-sm text-gray-600">
-                                <p>{order.shippingAddress.firstName} {order.shippingAddress.lastName}</p>
-                                <p>{order.shippingAddress.address}</p>
-                                <p>
-                                  {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}
-                                </p>
-                                <p>Phone: {order.shippingAddress.phone}</p>
-                                <p>Email: {order.shippingAddress.email}</p>
+                                <div className="flex items-center gap-3">
+                                  {order.profileImage ? (
+                                    <img
+                                      src={order.profileImage}
+                                      alt="Profile"
+                                      className="h-10 w-10 rounded-full object-cover border border-gray-300 shadow-sm"
+                                    />
+                                  ) : (
+                                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 font-bold text-lg">
+                                      {order.shippingAddress?.firstName ? order.shippingAddress.firstName[0].toUpperCase() : '?'}
+                                    </div>
+                                  )}
+                                  <div>
+                                    <div className="font-semibold text-gray-900">{order.shippingAddress?.firstName} {order.shippingAddress?.lastName}</div>
+                                    <div className="text-xs text-gray-500">{order.shippingAddress?.email}</div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                             <div>
@@ -292,13 +302,23 @@ const MyOrders = () => {
                             <div>
                               <h4 className="font-semibold text-gray-900 mb-2">Shipping Address</h4>
                               <div className="text-sm text-gray-600">
-                                <p>{order.shippingAddress.firstName} {order.shippingAddress.lastName}</p>
-                                <p>{order.shippingAddress.address}</p>
-                                <p>
-                                  {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}
-                                </p>
-                                <p>Phone: {order.shippingAddress.phone}</p>
-                                <p>Email: {order.shippingAddress.email}</p>
+                                <div className="flex items-center gap-3">
+                                  {order.profileImage ? (
+                                    <img
+                                      src={order.profileImage}
+                                      alt="Profile"
+                                      className="h-10 w-10 rounded-full object-cover border border-gray-300 shadow-sm"
+                                    />
+                                  ) : (
+                                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 font-bold text-lg">
+                                      {order.shippingAddress?.firstName ? order.shippingAddress.firstName[0].toUpperCase() : '?'}
+                                    </div>
+                                  )}
+                                  <div>
+                                    <div className="font-semibold text-gray-900">{order.shippingAddress?.firstName} {order.shippingAddress?.lastName}</div>
+                                    <div className="text-xs text-gray-500">{order.shippingAddress?.email}</div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                             <div>

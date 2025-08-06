@@ -29,6 +29,7 @@ interface Booking {
   email: string;
   status: 'Pending' | 'Completed';
   createdAt: string;
+  profileImage?: string; // Added profileImage to Booking interface
 }
 
 const Admin = () => {
@@ -655,12 +656,21 @@ const Admin = () => {
                         booking.status === 'Completed' ? 'bg-green-200' : 'bg-red-200'
                       }`}
                     >
-                      <div className="flex items-center space-x-4">
-                        <div>{booking.name}</div>
-                        <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
-                          <span className="text-amber-600 font-bold text-lg">
-                            {booking.name.charAt(0).toUpperCase()}
-                          </span>
+                      <div className="flex items-center gap-3">
+                        {booking.profileImage ? (
+                          <img
+                            src={booking.profileImage}
+                            alt="Profile"
+                            className="h-10 w-10 rounded-full object-cover border border-gray-300 shadow-sm"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 font-bold text-lg">
+                            {booking.name ? booking.name[0].toUpperCase() : '?'}
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-semibold text-gray-900">{booking.name}</div>
+                          <div className="text-xs text-gray-500">{booking.email}</div>
                         </div>
                       </div>
                       <div>{booking.date}</div>

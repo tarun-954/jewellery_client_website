@@ -8,6 +8,7 @@ const Signup = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [profileImage, setProfileImage] = useState<string>('');
+  const [previewImage, setPreviewImage] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { signup, loginWithGoogle } = useAuth();
@@ -15,9 +16,11 @@ const Signup = () => {
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setPreviewImage(URL.createObjectURL(file)); // Show preview immediately
       setUploading(true);
       const formData = new FormData();
-      formData.append('profileImage', e.target.files[0]);
+      formData.append('profileImage', file);
       try {
         const res = await fetch('http://localhost:5000/api/upload-profile-image', {
           method: 'POST',
@@ -51,7 +54,7 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#ffffff] px-2">
-      <div className="w-full max-w-5xl h-[95vh] flex flex-col md:flex-row rounded-xl overflow-hidden shadow-2xl bg-white/0">
+      <div className="w-full max-w-5xl flex flex-col md:flex-row rounded-xl overflow-hidden shadow-2xl bg-white/0">
         {/* Left: Branded Area */}
         <div className="relative flex-1 flex flex-col justify-center items-start px-8 py-12 bg-[#61121a] min-h-[400px]">
           {/* Large arc shape */}
@@ -74,7 +77,7 @@ const Signup = () => {
               <div className="flex flex-col items-center gap-2">
                 <div className="relative w-20 h-20">
                   <img
-                    src={profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name || 'User')}
+                    src={previewImage || profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name || 'User')}
                     alt="Profile Preview"
                     className="w-20 h-20 rounded-full object-cover border border-gray-200 shadow-sm bg-gray-100"
                   />
@@ -98,7 +101,7 @@ const Signup = () => {
                 {uploading && <span className="text-xs text-gray-400">Uploading...</span>}
               </div>
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-0.2">Full Name</label>
                 <input
                   id="name"
                   name="name"
@@ -111,7 +114,7 @@ const Signup = () => {
                 />
               </div>
               <div>
-                <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 ">Email Address</label>
                 <input
                   id="email-address"
                   name="email"
@@ -125,7 +128,7 @@ const Signup = () => {
                 />
               </div>
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
                 <input
                   id="password"
                   name="password"
@@ -145,9 +148,13 @@ const Signup = () => {
               >
                 Create Account
               </button>
+              {/* Already have an account? Sign in link */}
+              <p className="text-sm text-gray-500 text-center">Already have an account?{' '}
+                <Link to="/login" className="text-amber-700 hover:underline font-medium">Sign in</Link>
+              </p>
             </form>
             {/* Divider */}
-            <div className="flex items-center gap-2 my-2">
+            <div className="flex items-center gap-2 my-0.1">
               <div className="flex-grow border-t border-gray-200"></div>
               <span className="text-gray-400 text-xs">or</span>
               <div className="flex-grow border-t border-gray-200"></div>

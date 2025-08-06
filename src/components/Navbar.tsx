@@ -75,16 +75,35 @@ const Navbar = () => {
                   onClick={toggleDropdown}
                   className="text-gray-700 hover:text-amber-800 flex items-center"
                 >
-                  <User className="h-6 w-6" />
+                  {user.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt="Profile"
+                      className="h-8 w-8 rounded-full object-cover border border-gray-300 shadow-sm"
+                    />
+                  ) : (
+                    <User className="h-6 w-6" />
+                  )}
                 </button>
 
                 {dropdownOpen && (
                   <div
                     className="absolute right-0 mt-2 w-100 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-1 overflow-hidden"
                   >
-                    <div className="px-4 py-3 bg-amber-100 rounded-t-lg">
-                      <p className="font-semibold text-amber-800 truncate">{user.name}</p>
-                      <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                    <div className="px-4 py-3 bg-amber-100 rounded-t-lg flex items-center gap-3">
+                      {user.profileImage ? (
+                        <img
+                          src={user.profileImage}
+                          alt="Profile"
+                          className="h-10 w-10 rounded-full object-cover border border-gray-300 shadow-sm"
+                        />
+                      ) : (
+                        <User className="h-8 w-8 text-amber-800" />
+                      )}
+                      <div>
+                        <p className="font-semibold text-amber-800 truncate">{user.name}</p>
+                        <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                      </div>
                     </div>
                     <div className="divide-y divide-gray-200">
                       <Link

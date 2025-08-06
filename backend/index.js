@@ -744,9 +744,9 @@ app.post('/api/login', async (req, res) => {
     console.log('Generating JWT token...');
     const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET, { expiresIn: '1d' });
     console.log('Login successful:', email);
-    console.log('Sending response:', { token: '***', user: { id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin } });
+    console.log('Sending response:', { token: '***', user: { id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin, profileImage: user.profileImage } });
     console.log('=== LOGIN REQUEST END ===');
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin } });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin, profileImage: user.profileImage } });
   } catch (err) {
     console.error('=== LOGIN ERROR ===');
     console.error('Login error:', err);
