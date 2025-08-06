@@ -12,8 +12,10 @@ import ProductDetail from './pages/ProductDetail';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
 import Checkout from './pages/Checkout';
+import MyOrders from './pages/MyOrders';
 import { ProductProvider } from './context/ProductContext';
 import { AnalyticsProvider } from './context/AnalyticsContext';
+import { OrderProvider } from './context/OrderContext';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -21,25 +23,28 @@ function App() {
     <AuthProvider>
       <ProductProvider>
         <AnalyticsProvider>
-          <CartProvider>
-            <Router>
-              <div className="min-h-screen bg-neutral-50">
-                <Navbar />
-                <CartSidebar />
-                <BookingButton />
-                <Toaster position="top-center" />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="/category/:id" element={<CategoryPage />} />
-                  <Route path="/product/:id" element={<ProductDetail />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                </Routes>
-              </div>
-            </Router>
-          </CartProvider>
+          <OrderProvider>
+            <CartProvider>
+              <Router>
+                <div className="min-h-screen bg-neutral-50">
+                  <Navbar />
+                  <CartSidebar />
+                  <BookingButton />
+                  <Toaster position="top-center" />
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/admin" element={<Admin />} />
+                    <Route path="/category/:id" element={<CategoryPage />} />
+                    <Route path="/product/:id" element={<ProductDetail />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/my-orders" element={<MyOrders />} />
+                  </Routes>
+                </div>
+              </Router>
+            </CartProvider>
+          </OrderProvider>
         </AnalyticsProvider>
       </ProductProvider>
     </AuthProvider>

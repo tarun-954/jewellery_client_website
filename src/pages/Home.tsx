@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Diamond, Crown, Star, Gift, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const categories = [
   {
@@ -82,6 +83,8 @@ const fadeInFromTop = {
 };
 
 const Home = () => {
+  const { user } = useAuth();
+  
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -101,11 +104,19 @@ const Home = () => {
               <p className="text-xl text-white/80 mb-8">
                 Discover our exquisite collection of handcrafted jewelry pieces that tell your unique story.
               </p>
-              <Link to="/category/necklaces">
-              <button className="bg-amber-800 text-white px-8 py-4 rounded-md hover:bg-amber-900 transition text-lg">
-                Explore Collection
-              </button>
-              </Link>
+              {user?.isAdmin ? (
+                <Link to="/admin">
+                  <button className="bg-amber-800 text-white px-8 py-4 rounded-md hover:bg-amber-900 transition text-lg">
+                    Go to Dashboard
+                  </button>
+                </Link>
+              ) : (
+                <Link to="/category/necklaces">
+                  <button className="bg-amber-800 text-white px-8 py-4 rounded-md hover:bg-amber-900 transition text-lg">
+                    Explore Collection
+                  </button>
+                </Link>
+              )}
             </motion.div>
             {/* Hero Image */}
             <motion.div

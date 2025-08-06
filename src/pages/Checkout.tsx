@@ -2,14 +2,21 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAnalytics } from '../context/AnalyticsContext';
+import { useOrders } from '../context/OrderContext';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import Confetti from 'react-confetti'; // Add this import
+import Confetti from 'react-confetti';
 import { formatPrice } from '../utils/priceUtils';
+import OrderSuccess from '../components/OrderSuccess';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { items, totalItems, updateQuantity, removeFromCart, clearCart } = useCart();
   const { trackSale } = useAnalytics();
+  const { createOrder } = useOrders();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -22,6 +29,8 @@ export default function Checkout() {
     paymentMethod: 'credit-card',
   });
   const [showConfetti, setShowConfetti] = useState(false); // State for confetti
+  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; totalAmount: number } | null>(null);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false); // State for order placement loading
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData((prev) => ({
@@ -32,16 +41,29 @@ export default function Checkout() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!user) {
+      toast.error('Please log in to place an order');
+      navigate('/login');
+      return;
+    }
     if (items.length === 0) {
       toast.error('Your cart is empty!');
       return;
     }
+
+    // Start loading
+    setIsPlacingOrder(true);
+
+    // Add minimum delay to show loading animation
+    const startTime = Date.now();
+    const minDelay = 1000; // 1 second minimum
+
     try {
       // Track sales for each item
       for (const item of items) {
         for (let i = 0; i < item.quantity; i++) {
           await trackSale(
-            item.id,
+            parseInt(item.id) || 0, // Convert string ID to number for analytics
             item.name,
             `₹${item.price}`,
             item.category || 'unknown'
@@ -49,21 +71,90 @@ export default function Checkout() {
         }
       }
 
-      // Simulate order placement
-      toast.success('Order placed successfully!');
-      setShowConfetti(true); // Trigger confetti
+      // Create order data
+      const orderItems = items.map(item => ({
+        productId: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image
+      }));
+
+      const orderData = {
+        items: orderItems,
+        shippingAddress: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode
+        },
+        totalAmount: Number(calculateTotal()),
+        paymentMethod: formData.paymentMethod
+      };
+
+      // Create the order
+      const order = await createOrder(orderData);
       
-      // Clear cart after successful order
-      clearCart();
+      // Ensure minimum delay is met
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < minDelay) {
+        await new Promise(resolve => setTimeout(resolve, minDelay - elapsedTime));
+      }
       
-      setTimeout(() => {
-        setShowConfetti(false); // Hide confetti after 3 seconds
-        navigate('/');
-      }, 3000);
+      if (order) {
+        toast.success('Order placed successfully!');
+        setShowConfetti(true); // Trigger confetti
+        
+        // Clear cart after successful order
+        clearCart();
+        
+        // Set order success data
+        setOrderSuccess({
+          orderNumber: order.orderNumber,
+          totalAmount: order.totalAmount
+        });
+        
+        setTimeout(() => {
+          setShowConfetti(false); // Hide confetti after 3 seconds
+        }, 3000);
+      }
     } catch (error) {
+      console.error('Error placing order:', error);
       toast.error('Failed to place the order. Please try again.');
+    } finally {
+      // Stop loading
+      setIsPlacingOrder(false);
     }
   };
+
+  // Show success page if order was successful
+  if (orderSuccess) {
+    return <OrderSuccess orderNumber={orderSuccess.orderNumber} totalAmount={orderSuccess.totalAmount} />;
+  }
+
+  // Show loading overlay when placing order
+  if (isPlacingOrder) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-md mx-4">
+          <div className="mb-6">
+            <DotLottieReact
+              src="https://lottie.host/392e9441-67bc-4c24-8e3b-696318b2086c/xYgcRSwEqT.lottie"
+              style={{ width: '200px', height: '200px', margin: '0 auto' }}
+              loop
+              autoplay
+            />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Processing Your Order</h2>
+          <p className="text-gray-600">Please wait while we process your order...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -195,9 +286,24 @@ export default function Checkout() {
               </select>
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                disabled={isPlacingOrder}
+                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                Place Order
+                {isPlacingOrder ? (
+                  <>
+                    <dotlottie-player
+                      src="https://lottie.host/bfaaed62-4411-4432-84e4-165dd39c1529/VX4pVq1TJZ.lottie"
+                      background="transparent"
+                      speed={1}
+                      style={{ width: '24px', height: '24px', marginRight: '8px' }}
+                      loop
+                      autoplay
+                    ></dotlottie-player>
+                    Placing Order...
+                  </>
+                ) : (
+                  'Place Order'
+                )}
               </button>
             </form>
           </div>

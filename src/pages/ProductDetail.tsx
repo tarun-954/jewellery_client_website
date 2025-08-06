@@ -18,46 +18,63 @@ const ProductDetail = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [bookingData, setBookingData] = useState({
     name: '',
+    email: '',
     date: '',
     time: '',
     phone: '',
   });
 
-  const product = products.find((p) => p.id === Number(id));
+  const product = products.find((p) => p._id === id);
   const recommendations = products
-    .filter((p) => p.category === product?.category && p.id !== product?.id)
+          .filter((p) => p.category === product?.category && p._id !== product?._id)
     .slice(0, 4);
 
   if (!product) {
     return <div>Product not found</div>;
   }
 
-  const handleBookingSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleBookingSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Append new booking data to localStorage
-    const storedBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-    const newBooking = {
-      ...bookingData,
-      id: `${Date.now()}-${Math.random()}`,
-      status: 'Pending',
-      image: product.image || '',
-    };
-    const updatedBookings = [...storedBookings, newBooking];
-    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+    try {
+      // Send booking to database
+      const response = await fetch('http://localhost:5000/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: bookingData.name,
+          email: bookingData.email,
+          phone: bookingData.phone,
+          date: bookingData.date,
+          time: bookingData.time,
+        }),
+      });
 
-    setConfirmationMessage(
-      `🎉 Appointment successfully placed for ${bookingData.date} at ${bookingData.time}!`
-    );
-    setIsModalOpen(false);
-    setBookingData({ name: '', date: '', time: '', phone: '' });
-    setShowConfetti(true);
+      if (!response.ok) {
+        throw new Error('Failed to create booking');
+      }
 
-    // Automatically hide confetti and confirmation message after 5 seconds
-    setTimeout(() => {
-      setShowConfetti(false);
-      setConfirmationMessage('');
-    }, 5000);
+      const result = await response.json();
+      
+      setConfirmationMessage(
+        `🎉 Appointment successfully placed for ${bookingData.date} at ${bookingData.time}! Check your email for confirmation.`
+      );
+      setIsModalOpen(false);
+      setBookingData({ name: '', email: '', date: '', time: '', phone: '' });
+      setShowConfetti(true);
+
+      // Automatically hide confetti and confirmation message after 5 seconds
+      setTimeout(() => {
+        setShowConfetti(false);
+        setConfirmationMessage('');
+      }, 5000);
+      
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      setConfirmationMessage('❌ Failed to create booking. Please try again.');
+    }
   };
 
   return (
@@ -127,7 +144,7 @@ const ProductDetail = () => {
             <div className="space-y-4">
               <button
                 onClick={() => addToCart({
-                  id: product.id,
+                  id: product._id,
                   name: product.name,
                   price: typeof product.price === 'string' ? Number(product.price.replace(/[^\d.]/g, '')) : product.price,
                   image: product.image,
@@ -156,9 +173,9 @@ const ProductDetail = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {recommendations.map((rec) => (
               <div
-                key={rec.id}
+                key={rec._id}
                 className="group cursor-pointer"
-                onClick={() => navigate(`/product/${rec.id}`)}
+                onClick={() => navigate(`/product/${rec._id}`)}
               >
                 <div className="relative aspect-square overflow-hidden bg-gray-100 rounded-lg">
                   <img
@@ -190,6 +207,19 @@ const ProductDetail = () => {
                   value={bookingData.name}
                   onChange={(e) =>
                     setBookingData((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <input
+                  type="email"
+                  value={bookingData.email || ''}
+                  onChange={(e) =>
+                    setBookingData((prev) => ({ ...prev, email: e.target.value }))
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
                   required

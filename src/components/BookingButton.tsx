@@ -8,41 +8,51 @@ const BookingButton = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [bookingData, setBookingData] = useState({
     name: '',
+    email: '',
     date: '',
     time: '',
     phone: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Retrieve existing bookings from localStorage
-    const storedBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+    try {
+      // Send booking to backend
+      const response = await fetch('http://localhost:5000/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData),
+      });
 
-    // Create a new booking entry
-    const newBooking = {
-      ...bookingData,
-      id: `${Date.now()}-${Math.random()}`,
-      status: 'Pending'
-    };
+      if (!response.ok) {
+        throw new Error('Failed to create booking');
+      }
 
-    // Update localStorage with the new booking
-    const updatedBookings = [...storedBookings, newBooking];
-    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+      const result = await response.json();
 
-    // Show success message
-    setConfirmationMessage(
-      `🎉 Appointment successfully placed for ${bookingData.date} at ${bookingData.time}!`
-    );
-    setIsOpen(false);
-    setBookingData({ name: '', date: '', time: '', phone: '' });
-    setShowConfetti(true);
+      // Show success message
+      setConfirmationMessage(
+        `🎉 Booking request submitted for ${bookingData.date} at ${bookingData.time}! Check your email for details.`
+      );
+      setIsOpen(false);
+      setBookingData({ name: '', email: '', date: '', time: '', phone: '' });
+      setShowConfetti(true);
 
-    // Hide confetti and success message after 5 seconds
-    setTimeout(() => {
-      setShowConfetti(false);
-      setConfirmationMessage('');
-    }, 5000);
+      // Hide confetti and success message after 5 seconds
+      setTimeout(() => {
+        setShowConfetti(false);
+        setConfirmationMessage('');
+      }, 5000);
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      setConfirmationMessage('❌ Failed to create booking. Please try again.');
+      setTimeout(() => {
+        setConfirmationMessage('');
+      }, 3000);
+    }
   };
 
   return (
@@ -79,6 +89,20 @@ const BookingButton = () => {
                   value={bookingData.name}
                   onChange={(e) =>
                     setBookingData((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              {/* Email Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <input
+                  type="email"
+                  value={bookingData.email}
+                  onChange={(e) =>
+                    setBookingData((prev) => ({ ...prev, email: e.target.value }))
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
                   required

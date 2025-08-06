@@ -87,6 +87,13 @@ const Navbar = () => {
                       <p className="text-sm text-gray-600 truncate">{user.email}</p>
                     </div>
                     <div className="divide-y divide-gray-200">
+                      <Link
+                        to="/my-orders"
+                        onClick={() => setDropdownOpen(false)}
+                        className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-amber-800 transition duration-150"
+                      >
+                        My Orders
+                      </Link>
                       <button
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-amber-800 transition duration-150"

@@ -11,10 +11,10 @@ const CategoryPage = () => {
   const [sortBy, setSortBy] = useState('featured');
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [filters, setFilters] = useState({
-    priceRange: [0, 5000],
+    priceRange: [0, 100000],
     productType: '',
     material: '',
-    inStock: false
+    inStock: true
   });
   const filterRef = useRef<HTMLDivElement>(null);
   const { addToCart } = useCart();
@@ -24,7 +24,14 @@ const CategoryPage = () => {
 
   // Helper function to convert price to number
   const getPriceAsNumber = (price: string | number): number => {
-    return typeof price === 'string' ? parseFloat(price.replace(/[^0-9.]/g, '')) : price;
+    if (typeof price === 'number') return price;
+    if (typeof price === 'string') {
+      // Remove currency symbols, commas, and spaces, then parse
+      const cleanPrice = price.replace(/[₹,\s]/g, '');
+      const parsed = parseFloat(cleanPrice);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
   };
 
   // Close filter dropdown when clicking outside
@@ -61,8 +68,8 @@ const CategoryPage = () => {
         return false;
       }
       
-      // In stock filter (assuming all products are in stock for now)
-      if (filters.inStock && !product.inStock) {
+      // In stock filter - show only in-stock products when filter is active
+      if (filters.inStock && product.inStock === false) {
         return false;
       }
       
@@ -88,9 +95,8 @@ const CategoryPage = () => {
           return priceB - priceA;
         });
       case 'newest':
-        // Assuming products have an id that represents creation order
-        // Higher id means newer product
-        return products.sort((a, b) => b.id - a.id);
+        // Sort by creation date (newest first)
+        return products.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       case 'featured':
       default:
         // Keep original order for featured
@@ -101,10 +107,10 @@ const CategoryPage = () => {
   // Clear all filters
   const clearFilters = () => {
     setFilters({
-      priceRange: [0, 5000],
+      priceRange: [0, 100000],
       productType: '',
       material: '',
-      inStock: false
+      inStock: true
     });
   };
 
@@ -119,7 +125,15 @@ const CategoryPage = () => {
 
   // Get price range from products
   const priceRange = useMemo(() => {
-    const prices = categoryProducts.map(product => getPriceAsNumber(product.price));
+    const prices = categoryProducts.map(product => getPriceAsNumber(product.price)).filter(price => !isNaN(price) && price > 0);
+    
+    if (prices.length === 0) {
+      return {
+        min: 0,
+        max: 100000
+      };
+    }
+    
     return {
       min: Math.min(...prices),
       max: Math.max(...prices)
@@ -153,22 +167,24 @@ const CategoryPage = () => {
       <div className="border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <div className="relative" ref={filterRef}>
-              <button 
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors"
-                onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-              >
-                <Filter className="h-5 w-5" />
-                <span>Filter</span>
-                <ChevronDown className={`h-4 w-4 transition-transform ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
-                {Object.values(filters).some(filter => 
-                  Array.isArray(filter) ? filter[0] !== priceRange.min || filter[1] !== priceRange.max : filter !== '' && filter !== false
-                ) && (
-                  <span className="bg-amber-600 text-white text-xs px-2 py-1 rounded-full">
-                    Active
-                  </span>
-                )}
-              </button>
+            <div className="flex items-center space-x-4">
+              {/* Filter Button */}
+              <div className="relative" ref={filterRef}>
+                <button 
+                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 px-4 py-2 border border-gray-300 rounded-md hover:border-gray-400 transition-colors"
+                  onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                >
+                  <Filter className="h-5 w-5" />
+                  <span>Filter</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
+                  {Object.values(filters).some(filter => 
+                    Array.isArray(filter) ? filter[0] !== priceRange.min || filter[1] !== priceRange.max : filter !== '' && filter !== true
+                  ) && (
+                    <span className="bg-amber-600 text-white text-xs px-2 py-1 rounded-full">
+                      Active
+                    </span>
+                  )}
+                </button>
               
               {/* Filter Dropdown */}
               {isFilterDropdownOpen && (
@@ -193,6 +209,20 @@ const CategoryPage = () => {
                   </div>
                 </div>
               )}
+              </div>
+              
+              {/* Quick In Stock Filter */}
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, inStock: !prev.inStock }))}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  filters.inStock
+                    ? 'bg-amber-600 text-white hover:bg-amber-700'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                <span>✓</span>
+                <span>In Stock Only</span>
+              </button>
             </div>
             
             <div className="flex items-center space-x-4">
@@ -221,11 +251,11 @@ const CategoryPage = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {sortedProducts.map((product) => (
-            <div key={product.id} className="group">
-              <div 
-                className="relative aspect-[3/4] overflow-hidden bg-gray-100 cursor-pointer"
-                onClick={() => navigate(`/product/${product.id}`)}
-              >
+                          <div key={product._id} className="group">
+                              <div 
+                  className="relative aspect-[3/4] overflow-hidden bg-gray-100 cursor-pointer"
+                  onClick={() => navigate(`/product/${product._id}`)}
+                >
                 <img
                   src={product.image}
                   alt={product.name}
@@ -236,17 +266,17 @@ const CategoryPage = () => {
                 </button>
               </div>
               <div className="mt-4 text-center">
-                <h3 
-                  className="text-lg font-medium text-gray-900 cursor-pointer truncate overflow-hidden text-ellipsis"
-                  onClick={() => navigate(`/product/${product.id}`)}
-                  title={product.name} // Show full name on hover
-                >
+                                  <h3 
+                    className="text-lg font-medium text-gray-900 cursor-pointer truncate overflow-hidden text-ellipsis"
+                    onClick={() => navigate(`/product/${product._id}`)}
+                    title={product.name} // Show full name on hover
+                  >
                   {product.name}
                 </h3>
                 <p className="mt-1 text-gray-500">{formatPrice(getPriceAsNumber(product.price))}</p>
                 <button 
                   onClick={() => addToCart({
-                    id: product.id,
+                    id: product._id,
                     name: product.name,
                     price: getPriceAsNumber(product.price),
                     image: product.image,
@@ -295,43 +325,56 @@ const FilterContent: React.FC<FilterContentProps> = ({ filters, setFilters, clea
         <h4 className="font-medium text-gray-900 mb-3">Price Range</h4>
         <div className="space-y-3">
           <div className="flex gap-2">
-            <input
-              type="number"
-              placeholder="Min"
-              min={priceRange.min}
-              max={priceRange.max}
-              value={filters.priceRange[0]}
-              onChange={(e) => {
-                const value = parseInt(e.target.value) || priceRange.min;
-                setFilters(prev => ({
-                  ...prev,
-                  priceRange: [Math.max(priceRange.min, value), Math.max(prev.priceRange[1], value)]
-                }));
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
-            />
-            <input
-              type="number"
-              placeholder="Max"
-              min={priceRange.min}
-              max={priceRange.max}
-              value={filters.priceRange[1]}
-              onChange={(e) => {
-                const value = parseInt(e.target.value) || priceRange.max;
-                setFilters(prev => ({
-                  ...prev,
-                  priceRange: [prev.priceRange[0], Math.min(priceRange.max, Math.max(prev.priceRange[0], value))]
-                }));
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
-            />
+            <div className="flex-1">
+              <label className="block text-xs text-gray-600 mb-1">Min Price</label>
+              <input
+                type="number"
+                placeholder="Min"
+                min={0}
+                value={filters.priceRange[0]}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 0;
+                  setFilters(prev => ({
+                    ...prev,
+                    priceRange: [value, prev.priceRange[1]]
+                  }));
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs text-gray-600 mb-1">Max Price</label>
+              <input
+                type="number"
+                placeholder="Max"
+                min={0}
+                value={filters.priceRange[1]}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 100000;
+                  setFilters(prev => ({
+                    ...prev,
+                    priceRange: [prev.priceRange[0], value]
+                  }));
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+              />
+            </div>
           </div>
           <div className="text-sm text-gray-500">
             ₹{filters.priceRange[0].toLocaleString()} - ₹{filters.priceRange[1].toLocaleString()}
           </div>
           <div className="text-xs text-gray-400">
-            Range: ₹{priceRange.min.toLocaleString()} - ₹{priceRange.max.toLocaleString()}
+            Available range: ₹{priceRange.min.toLocaleString()} - ₹{priceRange.max.toLocaleString()}
           </div>
+          <button
+            onClick={() => setFilters(prev => ({
+              ...prev,
+              priceRange: [0, 100000]
+            }))}
+            className="text-xs text-amber-600 hover:text-amber-700 underline"
+          >
+            Reset to ₹0 - ₹1,00,000
+          </button>
         </div>
       </div>
 
@@ -377,18 +420,23 @@ const FilterContent: React.FC<FilterContentProps> = ({ filters, setFilters, clea
       {/* In Stock Filter */}
       <div>
         <h4 className="font-medium text-gray-900 mb-3">Availability</h4>
-        <label className="flex items-center">
-          <input
-            type="checkbox"
-            checked={filters.inStock}
-            onChange={(e) => setFilters(prev => ({
-              ...prev,
-              inStock: e.target.checked
-            }))}
-            className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
-          />
-          <span className="ml-2 text-sm text-gray-700">In Stock Only</span>
-        </label>
+        <div className="space-y-2">
+          <label className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+            <input
+              type="checkbox"
+              checked={filters.inStock}
+              onChange={(e) => setFilters(prev => ({
+                ...prev,
+                inStock: e.target.checked
+              }))}
+              className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+            />
+            <div className="ml-3">
+              <span className="text-sm font-medium text-gray-900">In Stock Only</span>
+              <p className="text-xs text-gray-500">Show only products currently available</p>
+            </div>
+          </label>
+        </div>
       </div>
     </div>
   );

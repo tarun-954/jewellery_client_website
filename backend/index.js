@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendBookingConfirmation, sendAdminConfirmation, sendOrderConfirmation, sendAdminOrderNotification } = require('./emailService');
 
 // Check if JWT_SECRET is set
 if (!process.env.JWT_SECRET) {
@@ -19,8 +20,71 @@ app.use(express.json());
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-}).then(() => {
+}).then(async () => {
   console.log('Connected to MongoDB');
+  
+  // Add sample products if none exist
+  const productCount = await Product.countDocuments();
+  if (productCount === 0) {
+    console.log('No products found, adding sample products...');
+    const sampleProducts = [
+      {
+        name: 'Diamond Pendant Necklace',
+        price: '1299',
+        image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=500',
+        category: 'Necklaces',
+        description: 'Beautiful diamond pendant necklace with elegant design',
+        material: 'Gold, Diamond'
+      },
+      {
+        name: 'Pearl Earrings',
+        price: '899',
+        image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500',
+        category: 'Earrings',
+        description: 'Classic pearl earrings perfect for any occasion',
+        material: 'Silver, Pearl'
+      },
+      {
+        name: 'Gold Bangle Set',
+        price: '2499',
+        image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=500',
+        category: 'Bangles',
+        description: 'Traditional gold bangle set with intricate designs',
+        material: 'Gold'
+      },
+      {
+        name: 'Silver Ring',
+        price: '599',
+        image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=500',
+        category: 'Rings',
+        description: 'Elegant silver ring with modern design',
+        material: 'Silver'
+      },
+      {
+        name: 'Ruby Necklace',
+        price: '1899',
+        image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500',
+        category: 'Necklaces',
+        description: 'Stunning ruby necklace with gold setting',
+        material: 'Gold, Ruby'
+      },
+      {
+        name: 'Emerald Bracelet',
+        price: '1599',
+        image: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=500',
+        category: 'Bracelets',
+        description: 'Beautiful emerald bracelet with silver chain',
+        material: 'Silver, Emerald'
+      }
+    ];
+    
+    try {
+      await Product.insertMany(sampleProducts);
+      console.log('Sample products added successfully');
+    } catch (error) {
+      console.error('Error adding sample products:', error);
+    }
+  }
 }).catch((err) => {
   console.error('MongoDB connection error:', err);
 });
@@ -38,6 +102,19 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 const User = mongoose.model('User', userSchema);
+
+// Product schema
+const productSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  price: { type: String, required: true },
+  image: { type: String, required: true },
+  category: { type: String, required: true },
+  description: { type: String, required: true },
+  material: String,
+  inStock: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
+});
+const Product = mongoose.model('Product', productSchema);
 
 // Analytics schemas
 const loginAnalyticsSchema = new mongoose.Schema({
@@ -65,6 +142,204 @@ const productSaleSchema = new mongoose.Schema({
   date: { type: String, default: () => new Date().toISOString().split('T')[0] }
 });
 const ProductSale = mongoose.model('ProductSale', productSaleSchema);
+
+// Booking schema
+const bookingSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  phone: { type: String, required: true },
+  date: { type: String, required: true },
+  time: { type: String, required: true },
+  status: { type: String, enum: ['Pending', 'Completed'], default: 'Pending' },
+  createdAt: { type: Date, default: Date.now }
+});
+const Booking = mongoose.model('Booking', bookingSchema);
+
+// Order schema
+const orderSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  orderNumber: { type: String, required: true, unique: true },
+  items: [{
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    name: { type: String, required: true },
+    price: { type: Number, required: true },
+    quantity: { type: Number, required: true },
+    image: { type: String, required: true }
+  }],
+  shippingAddress: {
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    zipCode: { type: String, required: true }
+  },
+  totalAmount: { type: Number, required: true },
+  status: { 
+    type: String, 
+    enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'], 
+    default: 'Pending' 
+  },
+  trackingNumber: { type: String, default: '' },
+  paymentMethod: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const Order = mongoose.model('Order', orderSchema);
+
+// Product endpoints
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await Product.find().sort({ createdAt: -1 });
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.post('/api/products', async (req, res) => {
+  try {
+    const { name, price, image, category, description, material } = req.body;
+    const product = new Product({
+      name,
+      price,
+      image,
+      category,
+      description,
+      material: material || ''
+    });
+    await product.save();
+    console.log('Product created successfully:', name);
+    res.status(201).json(product);
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    console.log('Product deleted successfully:', product.name);
+    res.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.get('/api/products/category/:category', async (req, res) => {
+  try {
+    const products = await Product.find({ category: req.params.category }).sort({ createdAt: -1 });
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching products by category:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Booking endpoints
+app.post('/api/bookings', async (req, res) => {
+  try {
+    const { name, email, phone, date, time } = req.body;
+    
+    // Create new booking
+    const booking = new Booking({
+      name,
+      email,
+      phone,
+      date,
+      time
+    });
+    
+    await booking.save();
+    
+    // Send confirmation email
+    const emailResult = await sendBookingConfirmation({
+      name,
+      email,
+      phone,
+      date,
+      time
+    });
+    
+    console.log('Email sending result:', emailResult);
+    
+    res.status(201).json({ 
+      message: 'Booking created successfully',
+      booking: booking,
+      emailSent: true
+    });
+    
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.get('/api/bookings', async (req, res) => {
+  try {
+    const bookings = await Booking.find().sort({ createdAt: -1 });
+    res.json(bookings);
+  } catch (error) {
+    console.error('Error fetching bookings:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.put('/api/bookings/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    
+    // Send admin confirmation email when status is changed to 'Completed'
+    if (status === 'Completed') {
+      const emailResult = await sendAdminConfirmation({
+        name: booking.name,
+        email: booking.email,
+        phone: booking.phone,
+        date: booking.date,
+        time: booking.time
+      });
+      
+      console.log('Admin confirmation email result:', emailResult);
+    }
+    
+    res.json({ message: 'Booking status updated', booking });
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.delete('/api/bookings/:id', async (req, res) => {
+  try {
+    const booking = await Booking.findByIdAndDelete(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    console.log('Booking deleted successfully:', booking.name);
+    res.json({ message: 'Booking deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting booking:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // Analytics endpoints
 app.get('/api/analytics/login-signup', async (req, res) => {
@@ -182,6 +457,134 @@ app.post('/api/analytics/track-sale', async (req, res) => {
   }
 });
 
+// Order endpoints
+app.post('/api/orders', async (req, res) => {
+  try {
+    const { userId, items, shippingAddress, totalAmount, paymentMethod } = req.body;
+    
+    // Validate required fields
+    if (!userId || !items || !shippingAddress || !totalAmount || !paymentMethod) {
+      return res.status(400).json({ 
+        message: 'Missing required fields: userId, items, shippingAddress, totalAmount, paymentMethod' 
+      });
+    }
+    
+    // Validate items array
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Items must be a non-empty array' });
+    }
+    
+    // Generate unique order number
+    const timestamp = Date.now();
+    const randomPart = Math.random().toString(36).substr(2, 9).toUpperCase();
+    const orderNumber = `ORD-${timestamp}-${randomPart}`;
+    
+    console.log('Creating order with number:', orderNumber);
+    console.log('Order data:', { userId, items: items.length, totalAmount, paymentMethod });
+    
+    const order = new Order({
+      userId,
+      orderNumber,
+      items,
+      shippingAddress,
+      totalAmount,
+      paymentMethod
+    });
+    
+    await order.save();
+    console.log('Order created successfully:', orderNumber);
+    
+    // Send order confirmation email to customer
+    try {
+      const emailResult = await sendOrderConfirmation(order);
+      console.log('Order confirmation email result:', emailResult);
+    } catch (emailError) {
+      console.error('Error sending order confirmation email:', emailError);
+      // Don't fail the order creation if email fails
+    }
+    
+    // Send admin notification email
+    try {
+      const adminEmailResult = await sendAdminOrderNotification(order);
+      console.log('Admin order notification email result:', adminEmailResult);
+    } catch (adminEmailError) {
+      console.error('Error sending admin order notification email:', adminEmailError);
+      // Don't fail the order creation if email fails
+    }
+    
+    res.status(201).json({ message: 'Order created successfully', order });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        message: 'Order number already exists. Please try again.' 
+      });
+    }
+    
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Validation error: ' + Object.values(error.errors).map(e => e.message).join(', ') 
+      });
+    }
+    
+    res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
+
+app.get('/api/orders/user/:userId', async (req, res) => {
+  try {
+    const orders = await Order.find({ userId: req.params.userId })
+      .populate('items.productId')
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.get('/api/orders', async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate('userId', 'name email')
+      .populate('items.productId')
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    console.error('Error fetching all orders:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.put('/api/orders/:id/status', async (req, res) => {
+  try {
+    const { status, trackingNumber } = req.body;
+    const updateData = { status, updatedAt: new Date() };
+    
+    if (trackingNumber) {
+      updateData.trackingNumber = trackingNumber;
+    }
+    
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    ).populate('userId', 'name email');
+    
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    
+    console.log('Order status updated:', order.orderNumber, 'to', status);
+    res.json({ message: 'Order status updated successfully', order });
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Signup endpoint
 app.post('/api/signup', async (req, res) => {
   const { name, email, password } = req.body;
@@ -248,9 +651,9 @@ app.post('/api/login', async (req, res) => {
     console.log('Generating JWT token...');
     const token = jwt.sign({ id: user._id, email: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET, { expiresIn: '1d' });
     console.log('Login successful:', email);
-    console.log('Sending response:', { token: '***', user: { name: user.name, email: user.email, isAdmin: user.isAdmin } });
+    console.log('Sending response:', { token: '***', user: { id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin } });
     console.log('=== LOGIN REQUEST END ===');
-    res.json({ token, user: { name: user.name, email: user.email, isAdmin: user.isAdmin } });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin } });
   } catch (err) {
     console.error('=== LOGIN ERROR ===');
     console.error('Login error:', err);

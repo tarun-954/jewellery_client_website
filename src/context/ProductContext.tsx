@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 interface Product {
-  id: number;
+  _id: string;
   name: string;
   price: string;
   image: string;
@@ -9,103 +9,102 @@ interface Product {
   description: string;
   material?: string;
   inStock?: boolean;
+  createdAt: string;
 }
 
 interface ProductContextType {
   products: Product[];
-  addProduct: (product: Omit<Product, 'id'>) => void;
-  deleteProduct: (id: number) => void;
+  loading: boolean;
+  error: string | null;
+  addProduct: (product: Omit<Product, '_id' | 'createdAt'>) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
   getProductsByCategory: (category: string) => Product[];
+  fetchProducts: () => Promise<void>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-// Initial products data
-const initialProducts = [
-  {
-    id: 1,
-    name: 'Diamond Pendant Necklace',
-    price: '₹1,299',
-    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80',
-    category: 'necklaces',
-    description: 'Elegant diamond pendant necklace featuring a stunning solitaire diamond set in 18k white gold. Perfect for special occasions.',
-    material: '18k White Gold',
-    inStock: true
-  },
-  {
-    id: 2,
-    name: 'Pearl String Necklace',
-    price: '₹899',
-    image: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&q=80',
-    category: 'necklaces',
-    description: 'Classic pearl string necklace with perfectly matched cultured pearls. A timeless piece for any collection.',
-    material: 'Silver',
-    inStock: true
-  },
-  {
-    id: 3,
-    name: 'Classic Diamond Ring',
-    price: '₹999',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80',
-    category: 'rings',
-    description: 'Beautiful diamond ring featuring a round brilliant cut diamond in a classic setting. Ideal for engagements.',
-    material: '18k White Gold',
-    inStock: true
-  },
-  {
-    id: 4,
-    name: 'Pearl Drop Earrings',
-    price: '₹499',
-    image: 'https://images.unsplash.com/photo-1635767798638-3665c302e27c?auto=format&fit=crop&q=80',
-    category: 'earrings',
-    description: 'Elegant pearl drop earrings with diamond accents. Perfect for both formal events and everyday wear.',
-    material: 'Silver',
-    inStock: true
-  }
-];
-
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Initialize state with data from localStorage or initial products
-  const [products, setProducts] = useState<Product[]>(() => {
-    const savedProducts = localStorage.getItem('products');
-    let loaded = savedProducts ? JSON.parse(savedProducts) : initialProducts;
-    // Ensure all products have category information
-    loaded = loaded.map((p: any) => ({
-      ...p,
-      category: p.category || 'unknown',
-      price: typeof p.price === 'string' ? p.price : `₹${p.price}`
-    }));
-    return loaded;
-  });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Save to localStorage whenever products change
-  useEffect(() => {
-    localStorage.setItem('products', JSON.stringify(products));
-  }, [products]);
+  const API_URL = 'http://localhost:5000/api';
 
-  const addProduct = (product: Omit<Product, 'id'>) => {
-    const newId = Math.max(...products.map(p => p.id), 0) + 1;
-    const newProduct = { 
-      ...product, 
-      id: newId, 
-      price: typeof product.price === 'number' ? `₹${product.price}` : product.price,
-      material: product.material || '',
-      inStock: product.inStock !== undefined ? product.inStock : true,
-      category: product.category || 'unknown'
-    };
-    setProducts(prev => [...prev, newProduct]);
+  const fetchProducts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/products`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      const data = await response.json();
+      setProducts(data);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch products');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const deleteProduct = (id: number) => {
-    setProducts(prev => prev.filter(product => product.id !== id));
+  const addProduct = async (product: Omit<Product, '_id' | 'createdAt'>) => {
+    try {
+      const response = await fetch(`${API_URL}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add product');
+      }
+
+      const newProduct = await response.json();
+      setProducts(prev => [newProduct, ...prev]);
+    } catch (err) {
+      console.error('Error adding product:', err);
+      throw err;
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    try {
+      const response = await fetch(`${API_URL}/products/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete product');
+      }
+
+      setProducts(prev => prev.filter(product => product._id !== id));
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      throw err;
+    }
   };
 
   const getProductsByCategory = (category: string) => {
     return products.filter(product => product.category === category);
   };
 
+  // Fetch products on mount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
   return (
-    <ProductContext.Provider value={{ products, addProduct, deleteProduct, getProductsByCategory }}>
+    <ProductContext.Provider value={{ 
+      products, 
+      loading, 
+      error, 
+      addProduct, 
+      deleteProduct, 
+      getProductsByCategory,
+      fetchProducts 
+    }}>
       {children}
     </ProductContext.Provider>
   );
