@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Filter, X, ChevronDown } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
-import { formatPrice } from '../utils/priceUtils';
+import { formatPrice, formatPriceString } from '../utils/priceUtils';
 
 const CategoryPage = () => {
   const { id } = useParams();
@@ -273,7 +273,7 @@ const CategoryPage = () => {
                   >
                   {product.name}
                 </h3>
-                <p className="mt-1 text-gray-500">{formatPrice(getPriceAsNumber(product.price))}</p>
+                <p className="mt-1 text-gray-500">{formatPriceString(product.price)}</p>
                 <button 
                   onClick={() => addToCart({
                     id: product._id,

@@ -52,6 +52,7 @@ passport.use(new GoogleStrategy({
   try {
     const email = profile.emails[0].value;
     let user = await User.findOne({ email });
+    let isNewUser = false;
     if (!user) {
       user = new User({
         name: profile.displayName,
@@ -60,6 +61,7 @@ passport.use(new GoogleStrategy({
         profileImage: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
       });
       await user.save();
+      isNewUser = true;
     } else {
       // Update profile image if changed
       if (profile.photos && profile.photos[0] && user.profileImage !== profile.photos[0].value) {
@@ -67,6 +69,16 @@ passport.use(new GoogleStrategy({
         await user.save();
       }
     }
+    
+    // Track signup analytics for new users
+    if (isNewUser) {
+      const signupAnalytics = new SignupAnalytics({
+        userId: user._id,
+        email: user.email
+      });
+      await signupAnalytics.save();
+    }
+    
     return done(null, user);
   } catch (err) {
     return done(err, null);
@@ -76,12 +88,25 @@ passport.use(new GoogleStrategy({
 // Google OAuth endpoints
 app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-app.get('/api/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login', session: true }), (req, res) => {
-  // Generate JWT and send to frontend (or set cookie)
-  const user = req.user;
-  const token = jwt.sign({ id: user._id, email: user.email, name: user.name, isAdmin: user.isAdmin, profileImage: user.profileImage }, process.env.JWT_SECRET, { expiresIn: '7d' });
-  // Redirect to frontend with token (e.g., as query param)
-  res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/oauth-success?token=${token}`);
+app.get('/api/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login', session: true }), async (req, res) => {
+  try {
+    // Generate JWT and send to frontend (or set cookie)
+    const user = req.user;
+    
+    // Track login analytics for Google OAuth
+    const loginAnalytics = new LoginAnalytics({
+      userId: user._id,
+      email: user.email
+    });
+    await loginAnalytics.save();
+    
+    const token = jwt.sign({ id: user._id, email: user.email, name: user.name, isAdmin: user.isAdmin, profileImage: user.profileImage }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    // Redirect to frontend with token (e.g., as query param)
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/oauth-success?token=${token}`);
+  } catch (error) {
+    console.error('Google OAuth callback error:', error);
+    res.redirect('/login');
+  }
 });
 
 // MongoDB connection
@@ -172,13 +197,28 @@ const upload = multer({ storage });
 // Serve uploads statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Profile image upload endpoint
-app.post('/api/upload-profile-image', upload.single('profileImage'), (req, res) => {
+// Profile image upload endpoint - stores image as Base64 in MongoDB
+app.post('/api/upload-profile-image', upload.single('profileImage'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
-  // Return the file path (relative URL)
-  res.json({ imageUrl: `/uploads/${req.file.filename}` });
+  
+  try {
+    // Read the file and convert to Base64
+    const fs = require('fs');
+    const filePath = req.file.path;
+    const fileBuffer = fs.readFileSync(filePath);
+    const base64Image = `data:${req.file.mimetype};base64,${fileBuffer.toString('base64')}`;
+    
+    // Delete the temporary file
+    fs.unlinkSync(filePath);
+    
+    // Return the Base64 image data
+    res.json({ imageUrl: base64Image });
+  } catch (error) {
+    console.error('Error processing image:', error);
+    res.status(500).json({ message: 'Error processing image' });
+  }
 });
 
 // Test endpoint
@@ -235,6 +275,17 @@ const productSaleSchema = new mongoose.Schema({
   date: { type: String, default: () => new Date().toISOString().split('T')[0] }
 });
 const ProductSale = mongoose.model('ProductSale', productSaleSchema);
+
+// Product View Tracking Schema for trending algorithm
+const productViewSchema = new mongoose.Schema({
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Optional, for logged-in users
+  ipAddress: String, // For anonymous tracking
+  userAgent: String,
+  timestamp: { type: Date, default: Date.now },
+  date: { type: String, default: () => new Date().toISOString().split('T')[0] }
+});
+const ProductView = mongoose.model('ProductView', productViewSchema);
 
 // Booking schema
 const bookingSchema = new mongoose.Schema({
@@ -297,9 +348,21 @@ app.get('/api/products', async (req, res) => {
 app.post('/api/products', async (req, res) => {
   try {
     const { name, price, image, category, description, material } = req.body;
+    
+    // Ensure consistent price formatting - remove existing ₹ symbol if present
+    let formattedPrice = price;
+    if (typeof price === 'string') {
+      // Remove existing ₹ symbol and format consistently
+      const cleanPrice = price.replace(/[₹,\s]/g, '');
+      const numericPrice = parseFloat(cleanPrice);
+      if (!isNaN(numericPrice)) {
+        formattedPrice = `₹${numericPrice.toLocaleString('en-IN')}`;
+      }
+    }
+    
     const product = new Product({
       name,
-      price,
+      price: formattedPrice,
       image,
       category,
       description,
@@ -532,6 +595,192 @@ app.get('/api/analytics/sales', async (req, res) => {
   }
 });
 
+// Get most ordered products endpoint - REAL TRENDING ALGORITHM
+app.get('/api/products/most-ordered', async (req, res) => {
+  try {
+    // Get the last 30 days for trending calculation
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    // Get the last 7 days for recent trending
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    // Step 1: Get order-based trending (most important)
+    const orderTrending = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: thirtyDaysAgo },
+          status: { $nin: ['Cancelled'] }
+        }
+      },
+      {
+        $unwind: '$items'
+      },
+      {
+        $group: {
+          _id: '$items.productId',
+          totalOrders: { $sum: 1 },
+          totalQuantity: { $sum: '$items.quantity' },
+          totalRevenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+          recentOrders: {
+            $sum: {
+              $cond: [
+                { $gte: ['$createdAt', sevenDaysAgo] },
+                1,
+                0
+              ]
+            }
+          },
+          lastOrderDate: { $max: '$createdAt' }
+        }
+      },
+      {
+        $sort: { totalOrders: -1, recentOrders: -1, totalRevenue: -1 }
+      },
+      {
+        $limit: 15
+      }
+    ]);
+
+    // Step 2: Get view-based trending (secondary factor)
+    const viewTrending = await ProductView.aggregate([
+      {
+        $match: {
+          timestamp: { $gte: thirtyDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: '$productId',
+          totalViews: { $sum: 1 },
+          recentViews: {
+            $sum: {
+              $cond: [
+                { $gte: ['$timestamp', sevenDaysAgo] },
+                1,
+                0
+              ]
+            }
+          },
+          uniqueViewers: { $addToSet: '$ipAddress' }
+        }
+      },
+      {
+        $addFields: {
+          uniqueViewCount: { $size: '$uniqueViewers' }
+        }
+      },
+      {
+        $sort: { totalViews: -1, recentViews: -1, uniqueViewCount: -1 }
+      },
+      {
+        $limit: 15
+      }
+    ]);
+
+    // Step 3: Combine and calculate trending scores
+    const allProductIds = new Set([
+      ...orderTrending.map(p => p._id.toString()),
+      ...viewTrending.map(p => p._id.toString())
+    ]);
+
+    const trendingScores = [];
+    
+    for (const productId of allProductIds) {
+      const orderData = orderTrending.find(p => p._id.toString() === productId);
+      const viewData = viewTrending.find(p => p._id.toString() === productId);
+      
+      // Calculate trending score with weights
+      const orderScore = orderData ? (orderData.totalOrders * 10) + (orderData.recentOrders * 20) + (orderData.totalRevenue / 100) : 0;
+      const viewScore = viewData ? (viewData.totalViews * 0.1) + (viewData.recentViews * 0.2) + (viewData.uniqueViewCount * 0.5) : 0;
+      
+      const totalScore = orderScore + viewScore;
+      
+      trendingScores.push({
+        productId,
+        orderData,
+        viewData,
+        trendingScore: totalScore
+      });
+    }
+
+    // Sort by trending score
+    trendingScores.sort((a, b) => b.trendingScore - a.trendingScore);
+
+    // Step 4: Fetch full product details for top trending products
+    const topProductIds = trendingScores.slice(0, 10).map(score => score.productId);
+    const fullProducts = await Product.find({ _id: { $in: topProductIds } });
+
+    // Step 5: Build final response
+    const productsWithTrendingData = trendingScores.slice(0, 10).map(score => {
+      const fullProduct = fullProducts.find(p => p._id.toString() === score.productId);
+      const orderData = score.orderData;
+      const viewData = score.viewData;
+      
+      return {
+        _id: score.productId,
+        name: fullProduct ? fullProduct.name : 'Product',
+        price: fullProduct ? fullProduct.price : '0',
+        image: fullProduct ? fullProduct.image : '',
+        category: fullProduct ? fullProduct.category : 'Jewelry',
+        description: fullProduct ? fullProduct.description : '',
+        orderCount: orderData ? orderData.totalOrders : 0,
+        totalQuantity: orderData ? orderData.totalQuantity : 0,
+        totalRevenue: orderData ? orderData.totalRevenue : 0,
+        recentOrders: orderData ? orderData.recentOrders : 0,
+        totalViews: viewData ? viewData.totalViews : 0,
+        recentViews: viewData ? viewData.recentViews : 0,
+        uniqueViewers: viewData ? viewData.uniqueViewCount : 0,
+        lastOrderDate: orderData ? orderData.lastOrderDate : null,
+        trendingScore: Math.round(score.trendingScore),
+        isTrending: score.trendingScore > 50 // Mark as trending if score > 50
+      };
+    });
+
+    res.json({ 
+      products: productsWithTrendingData,
+      algorithm: 'Real trending based on orders (70%) and views (30%) from last 30 days',
+      totalProductsAnalyzed: allProductIds.size
+    });
+
+  } catch (error) {
+    console.error('Error fetching most ordered products:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Track product view for trending algorithm
+app.post('/api/analytics/track-view', async (req, res) => {
+  try {
+    const { productId, userId, ipAddress, userAgent } = req.body;
+    
+    // Validate productId
+    if (!productId) {
+      return res.status(400).json({ message: 'Product ID is required' });
+    }
+    
+    // Check if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
+    const view = new ProductView({
+      productId,
+      userId: userId || null,
+      ipAddress: ipAddress || req.ip,
+      userAgent: userAgent || req.get('User-Agent')
+    });
+    
+    await view.save();
+    res.json({ message: 'View tracked successfully' });
+  } catch (error) {
+    console.error('Track view error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Track product sale
 app.post('/api/analytics/track-sale', async (req, res) => {
   try {
@@ -697,6 +946,14 @@ app.post('/api/signup', async (req, res) => {
       profileImage: profileImage || ''
     });
     await user.save();
+    
+    // Track signup analytics
+    const signupAnalytics = new SignupAnalytics({
+      userId: user._id,
+      email: user.email
+    });
+    await signupAnalytics.save();
+    
     res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
     console.error('Signup error:', error);
@@ -752,6 +1009,42 @@ app.post('/api/login', async (req, res) => {
     console.error('Login error:', err);
     console.error('Error stack:', err.stack);
     console.error('=== END LOGIN ERROR ===');
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update user profile endpoint
+app.put('/api/update-profile', async (req, res) => {
+  try {
+    const { userId, name, profileImage } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Update fields if provided
+    if (name) user.name = name;
+    if (profileImage !== undefined) user.profileImage = profileImage;
+    
+    await user.save();
+    
+    res.json({ 
+      message: 'Profile updated successfully',
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        isAdmin: user.isAdmin, 
+        profileImage: user.profileImage 
+      }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -163,9 +163,9 @@ const Signup = () => {
             <button
               type="button"
               onClick={loginWithGoogle}
-              className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 shadow-sm font-medium transition"
+              className="w-full flex items-center justify-center py-2  px-4 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 shadow-sm font-medium transition"
             >
-              <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google" className="w-5 h-5 mr-2" />
+              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwBj4O935vR1QxJ5BqTGp2Eaq94mWcR8iFrg&s" alt="Google" className="w-5 h-5 mr-2" />
               Continue with Google
             </button>
             <p className="text-xs text-gray-400 text-center mt-2">

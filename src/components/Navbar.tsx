@@ -88,24 +88,31 @@ const Navbar = () => {
 
                 {dropdownOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-100 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-1 overflow-hidden"
+                    className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden"
                   >
-                    <div className="px-4 py-3 bg-amber-100 rounded-t-lg flex items-center gap-3">
+                    <div className="px-4 py-3 bg-amber-100 flex items-center gap-3">
                       {user.profileImage ? (
                         <img
                           src={user.profileImage}
                           alt="Profile"
-                          className="h-10 w-10 rounded-full object-cover border border-gray-300 shadow-sm"
+                          className="h-10 w-10 rounded-full object-cover border border-gray-300 shadow-sm flex-shrink-0"
                         />
                       ) : (
-                        <User className="h-8 w-8 text-amber-800" />
+                        <User className="h-8 w-8 text-amber-800 flex-shrink-0" />
                       )}
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="font-semibold text-amber-800 truncate">{user.name}</p>
                         <p className="text-sm text-gray-600 truncate">{user.email}</p>
                       </div>
                     </div>
                     <div className="divide-y divide-gray-200">
+                      <Link
+                        to="/profile"
+                        onClick={() => setDropdownOpen(false)}
+                        className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-amber-800 transition duration-150"
+                      >
+                        My Profile
+                      </Link>
                       <Link
                         to="/my-orders"
                         onClick={() => setDropdownOpen(false)}

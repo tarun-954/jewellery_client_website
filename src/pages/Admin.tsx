@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Package, Trash2, CheckCircle, BarChart3, RefreshCw, Truck, Clock, XCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Package, Trash2, CheckCircle, BarChart3, RefreshCw, Truck, Clock, XCircle, Camera, X } from 'lucide-react';
 import { useProducts } from '../context/ProductContext';
 import { Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -7,7 +7,7 @@ import { useOrders } from '../context/OrderContext';
 import { useNavigate } from 'react-router-dom';
 import DashboardAnalytics from '../components/DashboardAnalytics';
 import toast from 'react-hot-toast';
-import { formatPrice } from '../utils/priceUtils';
+import { formatPrice, formatPriceString } from '../utils/priceUtils';
 
 interface Product {
   _id: string;
@@ -61,6 +61,13 @@ const Admin = () => {
   const [editingOrder, setEditingOrder] = useState<string | null>(null);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [orderUpdates, setOrderUpdates] = useState<{ [key: string]: { status: string; trackingNumber: string } }>({});
+
+  // Camera functionality
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraReady, setCameraReady] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Load bookings from database
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -148,7 +155,7 @@ const Admin = () => {
 
   const handleCompleteBooking = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/bookings/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/bookings/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -166,6 +173,86 @@ const Admin = () => {
     } catch (error) {
       console.error('Error updating booking:', error);
       toast.error('Failed to update booking');
+    }
+  };
+
+  // Camera functions
+  const startCamera = async () => {
+    try {
+      // Reset states
+      setCameraReady(false);
+      setShowCamera(true);
+      
+      // Try simpler video constraints first
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: true
+      });
+      
+      setCameraStream(stream);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        
+        // Simple approach: just play the video
+        videoRef.current.play().then(() => {
+          console.log('Video playing successfully');
+          // Give it a moment to start playing
+          setTimeout(() => {
+            setCameraReady(true);
+          }, 1000);
+        }).catch(e => {
+          console.error('Play error:', e);
+          toast.error('Camera playback error. Please try again.');
+        });
+        
+        videoRef.current.onerror = (e) => {
+          console.error('Video error:', e);
+          toast.error('Camera video error. Please try again.');
+          stopCamera();
+        };
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      toast.error('Unable to access camera. Please check permissions and try again.');
+      setShowCamera(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
+    setCameraReady(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      
+      if (context && video.videoWidth > 0 && video.videoHeight > 0) {
+        // Set canvas dimensions to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        // Draw the current video frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Convert to base64
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        setNewProduct((prev) => ({ ...prev, image: imageData }));
+        
+        // Stop camera after capturing
+        stopCamera();
+        toast.success('Photo captured successfully!');
+      } else {
+        toast.error('Camera not ready. Please wait a moment and try again.');
+      }
+    } else {
+      toast.error('Camera elements not found. Please refresh and try again.');
     }
   };
 
@@ -501,22 +588,32 @@ const Admin = () => {
                       {/* File Upload */}
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">Or Upload Image</label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = (event) => {
-                                const result = event.target?.result as string;
-                                setNewProduct((prev) => ({ ...prev, image: result }));
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
-                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  const result = event.target?.result as string;
+                                  setNewProduct((prev) => ({ ...prev, image: result }));
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                          />
+                          <button
+                            type="button"
+                            onClick={startCamera}
+                            className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors flex items-center gap-2"
+                          >
+                            <Camera className="w-4 h-4" />
+                            Camera
+                          </button>
+                        </div>
                       </div>
                       
                       {/* Image Preview */}
@@ -597,7 +694,9 @@ const Admin = () => {
                         <div className="flex-1">
                           <h3 className="font-medium">{product.name}</h3>
                           <p className="text-sm text-gray-600">{product.category}</p>
-                          <p className="text-sm font-medium">{formatPrice(Number(product.price))}</p>
+                          <p className="text-sm font-medium">
+                            {formatPriceString(product.price)}
+                          </p>
                         </div>
                         <button
                           onClick={() => handleDeleteProduct(product._id)}
@@ -699,6 +798,71 @@ const Admin = () => {
               </div>
             </div>
           </>
+        )}
+
+        {/* Camera Modal */}
+        {showCamera && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Take Photo</h3>
+                <button
+                  onClick={stopCamera}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="relative">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-64 bg-gray-900 rounded-lg"
+                />
+                <canvas
+                  ref={canvasRef}
+                  className="hidden"
+                />
+                {!cameraReady && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 rounded-lg">
+                    <div className="text-white text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
+                      <p>Initializing camera...</p>
+                      <button
+                        onClick={startCamera}
+                        className="mt-2 px-3 py-1 bg-amber-600 text-white rounded text-sm hover:bg-amber-700"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex justify-center mt-4 space-x-4">
+                <button
+                  onClick={capturePhoto}
+                  disabled={!cameraReady}
+                  className={`px-6 py-2 rounded-md transition-colors flex items-center gap-2 ${
+                    cameraReady 
+                      ? 'bg-amber-600 text-white hover:bg-amber-700' 
+                      : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  <Camera className="w-4 h-4" />
+                  {cameraReady ? 'Capture Photo' : 'Camera Loading...'}
+                </button>
+                <button
+                  onClick={stopCamera}
+                  className="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         )}
         </div>
       </div>

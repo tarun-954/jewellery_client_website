@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,6 +96,21 @@ const Login = () => {
                 <Link to="/signup" className="text-amber-700 hover:underline font-medium">Sign up</Link>
               </p>
             </form>
+            {/* Divider */}
+            <div className="flex items-center gap-2 my-4">
+              <div className="flex-grow border-t border-gray-200"></div>
+              <span className="text-gray-400 text-xs">or</span>
+              <div className="flex-grow border-t border-gray-200"></div>
+            </div>
+            {/* Google Login Button */}
+            <button
+              type="button"
+              onClick={loginWithGoogle}
+              className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 shadow-sm font-medium transition"
+            >
+              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwBj4O935vR1QxJ5BqTGp2Eaq94mWcR8iFrg&s" alt="Google" className="w-5 h-5 mr-2" />
+              Continue with Google
+            </button>
           </div>
         </div>
       </div>

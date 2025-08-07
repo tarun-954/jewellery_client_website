@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { ArrowLeft, Heart, Share2 } from 'lucide-react';
 import Confetti from 'react-confetti';
-import { formatPrice } from '../utils/priceUtils';
+import { formatPrice, formatPriceString } from '../utils/priceUtils';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -28,6 +28,32 @@ const ProductDetail = () => {
   const recommendations = products
           .filter((p) => p.category === product?.category && p._id !== product?._id)
     .slice(0, 4);
+
+  // Track product view for trending algorithm
+  useEffect(() => {
+    if (product && id) {
+      const trackProductView = async () => {
+        try {
+          await fetch('http://localhost:5000/api/analytics/track-view', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              productId: id,
+              userId: null, // Will be set if user is logged in
+              ipAddress: null, // Will be detected by server
+              userAgent: null // Will be detected by server
+            }),
+          });
+        } catch (error) {
+          console.error('Error tracking product view:', error);
+        }
+      };
+      
+      trackProductView();
+    }
+  }, [product, id]);
 
   if (!product) {
     return <div>Product not found</div>;
@@ -116,7 +142,7 @@ const ProductDetail = () => {
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-serif text-gray-900 mb-2">{product.name}</h1>
-              <p className="text-2xl text-amber-800">{formatPrice(product.price)}</p>
+              <p className="text-2xl text-amber-800">{formatPriceString(product.price)}</p>
             </div>
 
             <div className="space-y-4">
@@ -186,7 +212,7 @@ const ProductDetail = () => {
                 </div>
                 <div className="mt-4">
                   <h3 className="text-lg font-medium text-gray-900">{rec.name}</h3>
-                  <p className="text-amber-800">{formatPrice(rec.price)}</p>
+                  <p className="text-amber-800">{formatPriceString(rec.price)}</p>
                 </div>
               </div>
             ))}

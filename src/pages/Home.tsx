@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Diamond, Crown, Star, Gift, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import TrendingProductsCarousel from '../components/TrendingProductsCarousel';
 
 const categories = [
   {
@@ -104,6 +105,7 @@ const Home = () => {
               <p className="text-xl text-white/80 mb-8">
                 Discover our exquisite collection of handcrafted jewelry pieces that tell your unique story.
               </p>
+              
               {user?.isAdmin ? (
                 <Link to="/admin">
                   <button className="bg-amber-800 text-white px-8 py-4 rounded-md hover:bg-amber-900 transition text-lg">
@@ -194,6 +196,9 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+              {/* Trending Products Carousel Section */}
+        <TrendingProductsCarousel />
     </div>
   );
 };
