@@ -92,7 +92,7 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
       
       console.log('Sending order request:', requestBody);
       
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/orders/user/${user.id}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/user/${user.id}`);
       console.log('Response status:', response.status);
       
       if (!response.ok) {
@@ -157,7 +157,7 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:5000/api/orders');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders`);
       if (!response.ok) {
         throw new Error('Failed to fetch orders');
       }
@@ -177,7 +177,7 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

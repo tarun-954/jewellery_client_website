@@ -34,7 +34,7 @@ const ProductDetail = () => {
     if (product && id) {
       const trackProductView = async () => {
         try {
-          await fetch('http://localhost:5000/api/analytics/track-view', {
+          await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analytics/track-view`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ const ProductDetail = () => {
 
     try {
       // Send booking to database
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

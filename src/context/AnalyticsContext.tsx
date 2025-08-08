@@ -28,6 +28,8 @@ export const AnalyticsProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+
+
   const fetchAnalytics = async (days: number = 7) => {
     setLoading(true);
     setError(null);

@@ -19,7 +19,7 @@ const BookingButton = () => {
 
     try {
       // Send booking to backend
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/bookings`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

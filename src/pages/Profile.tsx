@@ -22,7 +22,7 @@ const Profile = () => {
       formData.append('profileImage', file);
       
       try {
-        const res = await fetch('http://localhost:5000/api/upload-profile-image', {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/upload-profile-image`, {
           method: 'POST',
           body: formData,
         });
@@ -48,7 +48,7 @@ const Profile = () => {
 
     setUpdating(true);
     try {
-      const res = await fetch('http://localhost:5000/api/update-profile', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/update-profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

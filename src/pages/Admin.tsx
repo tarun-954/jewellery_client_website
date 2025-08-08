@@ -76,7 +76,7 @@ const Admin = () => {
   const fetchBookings = async (showSuccessMessage = false) => {
     setBookingsLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/bookings`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/bookings`);
       if (!response.ok) {
         throw new Error('Failed to fetch bookings');
       }
@@ -137,7 +137,7 @@ const Admin = () => {
   const handleDeleteBooking = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this booking?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/bookings/${id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/bookings/${id}`, {
           method: 'DELETE',
         });
         if (response.ok) {
@@ -155,7 +155,7 @@ const Admin = () => {
 
   const handleCompleteBooking = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/bookings/${id}/status`, {
+              const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/bookings/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

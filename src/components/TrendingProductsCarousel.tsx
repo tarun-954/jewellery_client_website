@@ -41,7 +41,7 @@ const TrendingProductsCarousel = () => {
   const fetchTrendingProducts = async () => {
     try {
       console.log('Fetching trending products...');
-      const response = await fetch('http://localhost:5000/api/products/most-ordered');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/products/most-ordered`);
       console.log('Response status:', response.status);
       
       if (response.ok) {
@@ -61,7 +61,7 @@ const TrendingProductsCarousel = () => {
   // Track product view when user clicks on a product
   const trackProductView = async (productId: string) => {
     try {
-      await fetch('http://localhost:5000/api/analytics/track-view', {
+              await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analytics/track-view`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

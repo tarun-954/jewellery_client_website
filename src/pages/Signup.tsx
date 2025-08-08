@@ -22,7 +22,7 @@ const Signup = () => {
       const formData = new FormData();
       formData.append('profileImage', file);
       try {
-        const res = await fetch('http://localhost:5000/api/upload-profile-image', {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/upload-profile-image`, {
           method: 'POST',
           body: formData,
         });
