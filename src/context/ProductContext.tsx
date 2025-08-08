@@ -29,7 +29,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
   const fetchProducts = async () => {
     setLoading(true);

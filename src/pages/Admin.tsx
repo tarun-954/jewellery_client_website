@@ -76,7 +76,7 @@ const Admin = () => {
   const fetchBookings = async (showSuccessMessage = false) => {
     setBookingsLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/bookings');
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/bookings`);
       if (!response.ok) {
         throw new Error('Failed to fetch bookings');
       }

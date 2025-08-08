@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const API_URL = 'http://localhost:5000/api'; // Change if backend is hosted elsewhere
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api'; // Change if backend is hosted elsewhere
 
   const login = async (email: string, password: string) => {
     try {
@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Placeholder for Google OAuth
   const loginWithGoogle = async () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/google`;
   };
 
   const logout = () => {

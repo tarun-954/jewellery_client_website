@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { API_URL } from '../config/api';
 
 interface AnalyticsData {
   loginData: Array<{ _id: string; count: number }>;
@@ -26,8 +27,6 @@ export const AnalyticsProvider: React.FC<{ children: ReactNode }> = ({ children 
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const API_URL = 'http://localhost:5000/api';
 
   const fetchAnalytics = async (days: number = 7) => {
     setLoading(true);
