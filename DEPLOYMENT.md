@@ -1,11 +1,11 @@
-# Deployment Guide: Vercel + Railway + MongoDB Atlas
+# Deployment Guide: Vercel + Render + MongoDB Atlas (FREE!)
 
 ## 🚀 Frontend Deployment (Vercel)
 
 ### 1. Prepare Frontend
 1. Create a `.env` file in the root directory:
 ```env
-VITE_API_URL=https://your-railway-app-url.railway.app/api
+VITE_API_URL=https://your-render-app-url.onrender.com/api
 ```
 
 ### 2. Deploy to Vercel
@@ -19,10 +19,10 @@ VITE_API_URL=https://your-railway-app-url.railway.app/api
    - **Output Directory**: `dist`
    - **Install Command**: `npm install`
 6. Add Environment Variables:
-   - `VITE_API_URL`: `https://your-railway-app-url.railway.app/api`
+   - `VITE_API_URL`: `https://your-render-app-url.onrender.com/api`
 7. Click "Deploy"
 
-## 🔧 Backend Deployment (Railway)
+## 🔧 Backend Deployment (Render)
 
 ### 1. Prepare Backend
 1. Create a `.env` file in the `backend/` directory:
@@ -31,21 +31,25 @@ JWT_SECRET=your_super_secret_jwt_key_here
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/your_database
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALLBACK_URL=https://your-railway-app-url.railway.app/api/auth/google/callback
+GOOGLE_CALLBACK_URL=https://your-render-app-url.onrender.com/api/auth/google/callback
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_email_app_password
 PORT=5000
 ```
 
-### 2. Deploy to Railway
-1. Go to [railway.app](https://railway.app) and sign up/login
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Select your repository
+### 2. Deploy to Render
+1. Go to [render.com](https://render.com) and sign up/login
+2. Click "New" → "Web Service"
+3. Connect your GitHub repository
 4. Configure settings:
+   - **Name**: `your-app-backend`
    - **Root Directory**: `backend`
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install`
    - **Start Command**: `npm start`
+   - **Plan**: `Free`
 5. Add Environment Variables (same as above)
-6. Deploy
+6. Click "Create Web Service"
 
 ## 🗄️ Database Setup (MongoDB Atlas)
 
@@ -77,12 +81,12 @@ PORT=5000
 
 ## 🔄 Update Environment Variables
 
-### After Railway Deployment:
-1. Get your Railway app URL (e.g., `https://your-app.railway.app`)
+### After Render Deployment:
+1. Get your Render app URL (e.g., `https://your-app.onrender.com`)
 2. Update Vercel environment variable:
-   - `VITE_API_URL`: `https://your-app.railway.app/api`
-3. Update Railway environment variables:
-   - `GOOGLE_CALLBACK_URL`: `https://your-app.railway.app/api/auth/google/callback`
+   - `VITE_API_URL`: `https://your-app.onrender.com/api`
+3. Update Render environment variables:
+   - `GOOGLE_CALLBACK_URL`: `https://your-app.onrender.com/api/auth/google/callback`
 
 ## 🔐 Google OAuth Setup
 
@@ -94,12 +98,12 @@ PORT=5000
 5. Configure:
    - **Application type**: Web application
    - **Authorized redirect URIs**: 
-     - `https://your-app.railway.app/api/auth/google/callback`
+     - `https://your-app.onrender.com/api/auth/google/callback`
      - `http://localhost:5000/api/auth/google/callback` (for development)
 6. Copy Client ID and Client Secret
 
 ### 2. Update Environment Variables
-- Add to Railway: `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+- Add to Render: `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
 
 ## 📧 Email Setup
 
@@ -110,13 +114,13 @@ PORT=5000
 4. Use this password in `EMAIL_PASS`
 
 ### 2. Update Environment Variables
-- Add to Railway: `EMAIL_USER` and `EMAIL_PASS`
+- Add to Render: `EMAIL_USER` and `EMAIL_PASS`
 
 ## 🚀 Final Steps
 
 1. **Test your deployment**:
    - Frontend: `https://your-app.vercel.app`
-   - Backend: `https://your-app.railway.app/api/health`
+   - Backend: `https://your-app.onrender.com/api/health`
 
 2. **Update CORS settings** in backend if needed:
    ```javascript
@@ -128,14 +132,14 @@ PORT=5000
 
 3. **Monitor your applications**:
    - Vercel: Check deployment logs and performance
-   - Railway: Monitor logs and resource usage
+   - Render: Monitor logs and resource usage
    - MongoDB Atlas: Check database performance
 
 ## 💰 Cost Breakdown
 - **Vercel**: Free tier (or $20/month Pro)
-- **Railway**: $5/month
+- **Render**: Free tier (or $7/month Pro)
 - **MongoDB Atlas**: Free tier (or $9/month M0)
-- **Total**: $5-15/month
+- **Total**: FREE! 🎉
 
 ## 🔧 Troubleshooting
 
@@ -144,7 +148,11 @@ PORT=5000
 2. **Database connection**: Verify MongoDB URI and network access
 3. **Environment variables**: Ensure all variables are set correctly
 4. **Build errors**: Check Vercel build logs
-5. **Runtime errors**: Check Railway logs
+5. **Runtime errors**: Check Render logs
+6. **Free tier limitations**: 
+   - Render: 15 minutes of inactivity before sleep
+   - Vercel: 100GB bandwidth/month
+   - MongoDB Atlas: 512MB storage
 
 ### Useful Commands:
 ```bash
